@@ -7,6 +7,7 @@ import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothManager;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -36,6 +37,7 @@ public class MainActivity extends AppCompatActivity  {
     private BluetoothDevicesListAdapter adapter;
     private BluetoothScanner myBleScanner;
     private BluetoothAdvertiser myBleAdvertiser;
+    private BluetoothServer myBluetoothServer;
     private static final String TAG = "MyActivity";
 
 
@@ -83,7 +85,8 @@ public class MainActivity extends AppCompatActivity  {
         deviceListView.setVisibility(View.INVISIBLE);
 
         myBleScanner = new BluetoothScanner(this,1000000,-90);
-        myBleAdvertiser = new BluetoothAdvertiser("BB1A3410-B7CA-412C-8A13-AE9D912981AD","data",this);
+        myBleAdvertiser = new BluetoothAdvertiser(getString(R.string.service_uuid),"data",this);
+        myBluetoothServer = new BluetoothServer(this, getString(R.string.service_uuid), getString(R.string.characteristic_uuid), (BluetoothManager)getSystemService(BLUETOOTH_SERVICE));
         devicesFound = new ArrayList<>();
         adapter = new BluetoothDevicesListAdapter(this,R.layout.list_item_view, devicesFound);
         deviceListView.setAdapter(adapter);
@@ -95,12 +98,14 @@ public class MainActivity extends AppCompatActivity  {
                 scanBtn.setText("STOP");
                 startScan();
                 myBleAdvertiser.startAdvertiser();
+                myBluetoothServer.startServer();
                 currentAppState = 0;
                 scanBtn.setBackgroundColor(Color.RED);
             }else{
                 scanBtn.setText("SCAN");
                 stopScan();
                 myBleAdvertiser.stopAdvertiser();
+                myBluetoothServer.stopServer();
                 currentAppState = 1;
                 scanBtn.setBackgroundColor(Color.parseColor("#333CE5"));
             }

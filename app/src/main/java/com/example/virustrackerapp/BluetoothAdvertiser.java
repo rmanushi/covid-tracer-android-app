@@ -2,18 +2,12 @@ package com.example.virustrackerapp;
 
 
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothGattServer;
-import android.bluetooth.BluetoothGattService;
 import android.bluetooth.le.AdvertiseCallback;
 import android.bluetooth.le.AdvertiseData;
 import android.bluetooth.le.AdvertiseSettings;
 import android.bluetooth.le.BluetoothLeAdvertiser;
 import android.os.ParcelUuid;
-
-import java.nio.charset.StandardCharsets;
 import java.util.UUID;
-
-import java.nio.charset.Charset;
 
 public class BluetoothAdvertiser {
     private ParcelUuid serviceUUID;
@@ -30,7 +24,7 @@ public class BluetoothAdvertiser {
         bleAdvertiser = BluetoothAdapter.getDefaultAdapter().getBluetoothLeAdvertiser();
         this.mainActivity = mainActivity;
 
-        BluetoothAdapter.getDefaultAdapter().setName("X");
+        BluetoothAdapter.getDefaultAdapter().setName("VirusTrackerAppUser");
 
         advertiseSettings = new AdvertiseSettings.Builder()
                 .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)

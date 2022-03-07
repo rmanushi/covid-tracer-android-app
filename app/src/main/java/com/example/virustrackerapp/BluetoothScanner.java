@@ -2,20 +2,12 @@ package com.example.virustrackerapp;
 
 
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
-import android.bluetooth.BluetoothDevice;
 import android.bluetooth.le.ScanSettings;
-import android.os.Build;
 import android.os.Handler;
-import android.widget.Toast;
-
-
-import java.util.ArrayList;
-import java.util.List;
 
 //Class to represent the bluetooth scanner for the application.
 public class BluetoothScanner {
@@ -87,8 +79,6 @@ public class BluetoothScanner {
         }else{
             scanForDevices(true);
         }
-
-
     }
 
     public void stopScanner(){
