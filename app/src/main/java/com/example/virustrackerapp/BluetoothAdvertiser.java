@@ -11,15 +11,13 @@ import java.util.UUID;
 
 public class BluetoothAdvertiser {
     private ParcelUuid serviceUUID;
-    private String advData;
     private BluetoothLeAdvertiser bleAdvertiser;
     private MainActivity mainActivity;
     private AdvertiseSettings advertiseSettings;
     private AdvertiseData advertiseData;
 
-    public BluetoothAdvertiser(String uuid, String advData, MainActivity mainActivity) {
+    public BluetoothAdvertiser(String uuid, MainActivity mainActivity) {
         serviceUUID = new ParcelUuid(UUID.fromString(uuid));
-        this.advData = advData;
         //Initiating default advertiser.
         bleAdvertiser = BluetoothAdapter.getDefaultAdapter().getBluetoothLeAdvertiser();
         this.mainActivity = mainActivity;
@@ -36,8 +34,6 @@ public class BluetoothAdvertiser {
                 .setIncludeDeviceName(false)
                 .addServiceUuid(serviceUUID)
                 .build();
-        //To be fixed later.
-        //.addServiceData(serviceUUID,"1".getBytes())
     }
 
     private AdvertiseCallback advertiseCallback = new AdvertiseCallback() {

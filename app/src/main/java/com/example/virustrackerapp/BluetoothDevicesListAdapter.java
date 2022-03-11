@@ -1,8 +1,5 @@
 package com.example.virustrackerapp;
 
-import static android.R.layout.simple_list_item_2;
-
-import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -63,7 +60,7 @@ public class BluetoothDevicesListAdapter extends ArrayAdapter<BluetoothDevice> {
 
         //Displaying device address.
         textView = (TextView) convertView.findViewById(R.id.tv_macaddr);
-        if(deviceName != null && deviceName.length() > 0){
+        if(deviceAddress != null && deviceAddress.length() > 0){
             textView.setText(deviceAddress);
         }else{
             textView.setText("No address.");
@@ -71,4 +68,6 @@ public class BluetoothDevicesListAdapter extends ArrayAdapter<BluetoothDevice> {
 
         return convertView;
     }
+
+
 }

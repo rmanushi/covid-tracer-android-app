@@ -4,8 +4,15 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="../../../../layout/custom_preview.xml" value="0.13541666666666666" />
-        <entry key="app/src/main/res/layout/activity_main.xml" value="0.279192716998907" />
+        <entry key="app/src/main/res/drawable/round_corner.xml" value="0.13645833333333332" />
+        <entry key="app/src/main/res/drawable/shape.xml" value="0.22760416666666666" />
+        <entry key="app/src/main/res/layout/activity_close_contact.xml" value="0.2929568386471931" />
+        <entry key="app/src/main/res/layout/activity_main.xml" value="0.10125264464395682" />
+        <entry key="app/src/main/res/layout/close_contact_dialog.xml" value="0.18" />
+        <entry key="app/src/main/res/layout/close_contact_popup.xml" value="0.25749812818395706" />
         <entry key="app/src/main/res/layout/empty_list_view.xml" value="0.2302323007476088" />
+        <entry key="app/src/main/res/layout/fragment_first.xml" value="0.33" />
+        <entry key="app/src/main/res/layout/fragment_second.xml" value="0.1" />
         <entry key="app/src/main/res/layout/list_item_view.xml" value="0.19157894736842104" />
         <entry key="app/src/main/res/layout/registration_activity_popup.xml" value="0.16485507246376813" />
         <entry key="app/src/main/res/layout/simple_list_item_2.xml" value="0.21386087813059573" />

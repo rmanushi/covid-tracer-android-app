@@ -13,8 +13,26 @@
         android:layout_marginStart="32dp"
         android:layout_marginTop="25dp"
         android:layout_marginEnd="33dp"
-        android:background="#DCDCDC"
+        android:backgroundTint="#DCDCDC"
+        android:background="@drawable/round_corner_shape"
         android:clickable="false"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" >
+    </ListView>
+
+    <TextView
+        android:id="@+id/appNotActive"
+        android:layout_width="176dp"
+        android:layout_height="80dp"
+        android:layout_marginStart="81dp"
+        android:layout_marginTop="170dp"
+        android:layout_marginEnd="81dp"
+        android:background="@drawable/round_corner_shape"
+        android:backgroundTint="#DCDCDC"
+        android:text="App is not active!"
+        android:textAlignment="center"
+        android:textSize="20sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -59,6 +77,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.495"
         app:layout_constraintStart_toStartOf="parent"
-        tools:layout_editor_absoluteY="582dp" />
+        tools:layout_editor_absoluteY="571dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

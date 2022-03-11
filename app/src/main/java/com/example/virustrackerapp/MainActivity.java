@@ -9,18 +9,20 @@ import android.Manifest;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.RadioButton;
 import android.os.Build;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
-//import java.util.jar.Manifest;
 
 public class MainActivity extends AppCompatActivity  {
     private final int APP_STATE_ON = 1;
@@ -29,6 +31,7 @@ public class MainActivity extends AppCompatActivity  {
     private Button scanBtn, updateBtn;
     private ListView deviceListView;
     private TextView header;
+    private TextView appNotActiveTv;
     private final int LOCATION_REQUEST_CODE = 3;
     private final int INTERNET_REQUEST_CODE = 4;
     private final int PERMISSIONS_REQUEST_CODE = 10;
@@ -81,21 +84,31 @@ public class MainActivity extends AppCompatActivity  {
         updateBtn = (Button) findViewById(R.id.updateBtn);
         deviceListView = (ListView) findViewById(R.id.deviceList);
         header = (TextView) findViewById(R.id.nearByBanner);
+        appNotActiveTv = (TextView) findViewById(R.id.appNotActive);
         header.setVisibility(View.INVISIBLE);
         deviceListView.setVisibility(View.INVISIBLE);
 
         myBleScanner = new BluetoothScanner(this,1000000,-90);
-        myBleAdvertiser = new BluetoothAdvertiser(getString(R.string.service_uuid),"data",this);
+        myBleAdvertiser = new BluetoothAdvertiser(getString(R.string.service_uuid),this);
         myBluetoothServer = new BluetoothServer(this, getString(R.string.service_uuid), getString(R.string.characteristic_uuid), (BluetoothManager)getSystemService(BLUETOOTH_SERVICE));
         devicesFound = new ArrayList<>();
         adapter = new BluetoothDevicesListAdapter(this,R.layout.list_item_view, devicesFound);
         deviceListView.setAdapter(adapter);
+        //Setting listener for event to occur when a specific list item is clicked.
+        deviceListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                //Toast.makeText(getApplicationContext(),"Clicked on device:"+position,Toast.LENGTH_SHORT).show();
+                launchCloseContactActivity(devicesFound.get(position));
+            }
+        });
 
         updateBtn.setOnClickListener(v -> createUpdateDialog());
 
         scanBtn.setOnClickListener(v -> {
             if(currentAppState == APP_STATE_ON){
                 scanBtn.setText("STOP");
+                appNotActiveTv.setVisibility(View.INVISIBLE);
                 startScan();
                 myBleAdvertiser.startAdvertiser();
                 myBluetoothServer.startServer();
@@ -106,14 +119,11 @@ public class MainActivity extends AppCompatActivity  {
                 stopScan();
                 myBleAdvertiser.stopAdvertiser();
                 myBluetoothServer.stopServer();
+                appNotActiveTv.setVisibility(View.VISIBLE);
                 currentAppState = 1;
                 scanBtn.setBackgroundColor(Color.parseColor("#333CE5"));
             }
         });
-
-
-
-
     }
 
     public void startScan(){
@@ -146,6 +156,7 @@ public class MainActivity extends AppCompatActivity  {
                 requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION},PERMISSIONS_REQUEST_CODE);
             }
         }else{
+            //No permission required on older versions.
             deviceListView.setVisibility(View.VISIBLE);
             myBleScanner.startScanner();
             UtilityClass.toast(this,"Permissions granted.");
@@ -318,4 +329,11 @@ public class MainActivity extends AppCompatActivity  {
         UtilityClass.toast(this,"Entered to db values vaccine: "+x+", infection: "+y+" for user: "+uid+".");
     }
 
+    //Method to be called by the click of a list item.
+    public void launchCloseContactActivity(BluetoothDevice bleD){
+        //Creating an intent and passing the selected device to the next activity.
+        Intent intent = new Intent(getApplicationContext(), CloseContactActivity.class);
+        intent.putExtra("Device", bleD);
+        startActivity(intent);
+    }
 }

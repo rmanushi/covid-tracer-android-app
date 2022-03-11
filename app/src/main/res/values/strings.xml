@@ -2,4 +2,13 @@
     <string name="app_name">VirusTrackerApp</string>
     <string name="service_uuid">BB1A3410-B7CA-412C-8A13-AE9D912981AD</string>
     <string name="characteristic_uuid">AD4FC837-06CB-476B-8CB3-DFC6876F187E</string>
+    <string name="title_activity_close_contact">CloseContactActivity</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">First Fragment</string>
+    <string name="second_fragment_label">Second Fragment</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+
+    <string name="hello_first_fragment">Hello first fragment</string>
+    <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
 </resources>
