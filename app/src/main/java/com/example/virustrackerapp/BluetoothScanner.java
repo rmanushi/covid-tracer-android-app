@@ -8,6 +8,10 @@ import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
 import android.os.Handler;
+import android.os.ParcelUuid;
+
+import java.util.ArrayList;
+import java.util.UUID;
 
 //Class to represent the bluetooth scanner for the application.
 public class BluetoothScanner {
@@ -17,12 +21,30 @@ public class BluetoothScanner {
     private long scanPeriod;
     //Used for distance measurement purposes.
     private int rssiValue;
+    private ParcelUuid filterUUID;
     private BluetoothLeScanner bleScanner;
+    private ArrayList<ScanFilter> filters;
+    private ScanFilter scanFilter;
+    private ScanSettings scanSettings;
 
-    public BluetoothScanner(MainActivity mainActivity, long scanPeriod, int rssiValue) {
+    public BluetoothScanner(MainActivity mainActivity, long scanPeriod, int rssiValue, String filterStringUUID) {
         this.mainActivity = mainActivity;
         this.scanPeriod = scanPeriod;
         this.rssiValue = rssiValue;
+        filterUUID = new ParcelUuid(UUID.fromString(filterStringUUID));
+        filters = new ArrayList<ScanFilter>();
+        //Filtering results by service UUID.
+        scanFilter = new ScanFilter
+                .Builder()
+                .setServiceUuid(filterUUID)
+                .build();
+
+        filters.add(scanFilter);
+
+        scanSettings = new ScanSettings
+                .Builder().
+                setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+                .build();
 
         handler = new Handler();
         //Initiating default bluetooth le scanner.
@@ -65,7 +87,7 @@ public class BluetoothScanner {
             },scanPeriod);
 
             scanning = true;
-            bleScanner.startScan(scanCallback);
+            bleScanner.startScan(filters,scanSettings,scanCallback);
         }else{
             scanning = false;
             bleScanner.stopScan(scanCallback);
