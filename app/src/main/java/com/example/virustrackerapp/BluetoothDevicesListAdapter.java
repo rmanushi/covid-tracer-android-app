@@ -16,9 +16,9 @@ import java.util.ArrayList;
 
 public class BluetoothDevicesListAdapter extends ArrayAdapter<BluetoothDevice> {
 
-    private Activity myActivity;
-    private ArrayList<BluetoothDevice> deviceList;
-    private int resourceID;
+    private final Activity myActivity;
+    private final ArrayList<BluetoothDevice> deviceList;
+    private final int resourceID;
 
     /**
      * Constructor
@@ -48,7 +48,7 @@ public class BluetoothDevicesListAdapter extends ArrayAdapter<BluetoothDevice> {
         String deviceAddress = device.getAddress();
 
         //Need to update with uuid for service.
-        TextView textView = null;
+        TextView textView;
         //Displaying device name.
         //To be removed in the future for privacy reasons.
         textView = (TextView) convertView.findViewById(R.id.tv_name);

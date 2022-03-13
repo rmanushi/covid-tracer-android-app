@@ -1,26 +1,23 @@
 package com.example.virustrackerapp;
 
+import android.Manifest;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothManager;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.os.Build;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ListView;
+import android.widget.RadioButton;
+import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-
-import android.Manifest;
-import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothManager;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.graphics.Color;
-import android.os.Bundle;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.Button;
-import android.widget.ListView;
-import android.widget.RadioButton;
-import android.os.Build;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 
@@ -28,12 +25,10 @@ public class MainActivity extends AppCompatActivity  {
     private final int APP_STATE_ON = 1;
     private int currentAppState;
     //Components in the main page.
-    private Button scanBtn, updateBtn;
+    private Button scanBtn;
     private ListView deviceListView;
     private TextView header;
     private TextView appNotActiveTv;
-    private final int LOCATION_REQUEST_CODE = 3;
-    private final int INTERNET_REQUEST_CODE = 4;
     private final int PERMISSIONS_REQUEST_CODE = 10;
 
     private ArrayList<BluetoothDevice> devicesFound;
@@ -41,18 +36,15 @@ public class MainActivity extends AppCompatActivity  {
     private BluetoothScanner myBleScanner;
     private BluetoothAdvertiser myBleAdvertiser;
     private BluetoothServer myBluetoothServer;
-    private static final String TAG = "MyActivity";
 
 
     //Components that are going to be shown in the update pop up.
     private AlertDialog.Builder dialogBuilder;
     private AlertDialog updateDialog;
-    private Button updatePopUpSubmitBtn, updatePopUpCancelBtn;
     private RadioButton trueUpdateInfectionBtn, falseUpdateInfectionBtn, trueUpdateVaccineBtn, falseUpdateVaccineBtn;
 
     //Components that are going to be shown in the registration pop up.
     private AlertDialog registrationDialog;
-    private Button registrationPopUpSubmitBtn, registrationPopUpCancelBtn;
     private RadioButton trueRegistrationInfectionBtn, falseRegistrationInfectionBtn, trueRegistrationVaccineBtn, falseRegistrationVaccineBtn;
 
     @Override
@@ -81,7 +73,7 @@ public class MainActivity extends AppCompatActivity  {
 
         setContentView(R.layout.activity_main);
         scanBtn = (Button) findViewById(R.id.scanBtn);
-        updateBtn = (Button) findViewById(R.id.updateBtn);
+        Button updateBtn = (Button) findViewById(R.id.updateBtn);
         deviceListView = (ListView) findViewById(R.id.deviceList);
         header = (TextView) findViewById(R.id.nearByBanner);
         appNotActiveTv = (TextView) findViewById(R.id.appNotActive);
@@ -95,12 +87,7 @@ public class MainActivity extends AppCompatActivity  {
         adapter = new BluetoothDevicesListAdapter(this,R.layout.list_item_view, devicesFound);
         deviceListView.setAdapter(adapter);
         //Setting listener for event to occur when a specific list item is clicked.
-        deviceListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                launchCloseContactActivity(devicesFound.get(position));
-            }
-        });
+        deviceListView.setOnItemClickListener((parent, view, position, id) -> launchCloseContactActivity(devicesFound.get(position)));
 
         updateBtn.setOnClickListener(v -> createUpdateDialog());
 
@@ -135,18 +122,10 @@ public class MainActivity extends AppCompatActivity  {
                     dialogBuilder.setTitle("The application requires location access.");
                     dialogBuilder.setMessage("Grant location access so the app can scan for nearby users.");
                     //If ok button is pressed request permission.
-                    dialogBuilder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION},PERMISSIONS_REQUEST_CODE);
-                        }
-                    });
-                    dialogBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            UtilityClass.toast(MainActivity.this, "Permissions denied.");
-                            dialog.dismiss();
-                        }
+                    dialogBuilder.setPositiveButton("Ok", (dialog, which) -> ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION},PERMISSIONS_REQUEST_CODE));
+                    dialogBuilder.setNegativeButton("Cancel", (dialog, which) -> {
+                        UtilityClass.toast(MainActivity.this, "Permissions denied.");
+                        dialog.dismiss();
                     });
                     dialogBuilder.show();
                 }
@@ -202,8 +181,8 @@ public class MainActivity extends AppCompatActivity  {
         final View updatePopUpView = getLayoutInflater().inflate(R.layout.update_activity_popup,null);
 
         //Setting up submit and cancel buttons to their components in the update layout.
-        updatePopUpSubmitBtn = (Button) updatePopUpView.findViewById(R.id.submitRegistrationBtn);
-        updatePopUpCancelBtn = (Button) updatePopUpView.findViewById(R.id.cancelRegistrationBtn);
+        Button updatePopUpSubmitBtn = (Button) updatePopUpView.findViewById(R.id.submitRegistrationBtn);
+        Button updatePopUpCancelBtn = (Button) updatePopUpView.findViewById(R.id.cancelRegistrationBtn);
 
         //Setting up radio buttons to their components in the update layout.
         trueUpdateInfectionBtn = (RadioButton) updatePopUpView.findViewById(R.id.infectionTrueBtnReg);
@@ -262,8 +241,8 @@ public class MainActivity extends AppCompatActivity  {
         final View registrationPopUpView = getLayoutInflater().inflate(R.layout.registration_activity_popup,null);
 
         //Setting up submit and cancel buttons to their components in the registration layout.
-        registrationPopUpCancelBtn = (Button) registrationPopUpView.findViewById(R.id.cancelRegistrationBtn);
-        registrationPopUpSubmitBtn = (Button) registrationPopUpView.findViewById(R.id.submitRegistrationBtn);
+        Button registrationPopUpCancelBtn = (Button) registrationPopUpView.findViewById(R.id.cancelRegistrationBtn);
+        Button registrationPopUpSubmitBtn = (Button) registrationPopUpView.findViewById(R.id.submitRegistrationBtn);
 
         //Setting up radio buttons to their components in the registration layout.
         trueRegistrationInfectionBtn = (RadioButton) registrationPopUpView.findViewById(R.id.infectionTrueBtnReg);
@@ -276,9 +255,7 @@ public class MainActivity extends AppCompatActivity  {
         registrationDialog = dialogBuilder.create();
         registrationDialog.show();
 
-        registrationPopUpCancelBtn.setOnClickListener(v -> {
-            UtilityClass.toast(this,"Registration is required to use the application.");
-        });
+        registrationPopUpCancelBtn.setOnClickListener(v -> UtilityClass.toast(this,"Registration is required to use the application."));
 
         ////////////////////Radio button changes when they are pressed registration////////////////////
         trueRegistrationVaccineBtn.setOnClickListener(v -> {
