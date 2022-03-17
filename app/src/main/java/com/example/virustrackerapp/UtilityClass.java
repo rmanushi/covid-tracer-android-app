@@ -6,6 +6,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.widget.Toast;
 
+import java.nio.ByteBuffer;
+import java.util.UUID;
+
 //Class to help with simple helper services.
 
 public class UtilityClass {
@@ -34,6 +37,21 @@ public class UtilityClass {
     //Method to print messages to the user.
     public static void toast(Context context, String message){
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
+    }
+
+    public static byte[] getBytesFromUUID(UUID uuid) {
+        ByteBuffer bb = ByteBuffer.wrap(new byte[16]);
+        bb.putLong(uuid.getMostSignificantBits());
+        bb.putLong(uuid.getLeastSignificantBits());
+        return bb.array();
+    }
+
+    public static UUID getUUIDFromBytes(byte[] bytes) {
+        ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
+        Long high = byteBuffer.getLong();
+        Long low = byteBuffer.getLong();
+
+        return new UUID(high, low);
     }
 
 }

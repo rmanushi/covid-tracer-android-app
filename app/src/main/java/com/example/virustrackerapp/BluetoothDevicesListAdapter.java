@@ -44,28 +44,15 @@ public class BluetoothDevicesListAdapter extends ArrayAdapter<BluetoothDevice> {
         }
 
         BluetoothDevice device = deviceList.get(position);
-        String deviceName = device.getName();
         String deviceAddress = device.getAddress();
-
-        //Need to update with uuid for service.
         TextView textView;
-        //Displaying device name.
-        //To be removed in the future for privacy reasons.
-        textView = (TextView) convertView.findViewById(R.id.tv_name);
-        if(deviceName != null && deviceName.length() > 0){
-            textView.setText(deviceName);
-        }else{
-            textView.setText("No name.");
-        }
-
-        //Displaying device address.
-        textView = (TextView) convertView.findViewById(R.id.tv_macaddr);
+        //Displaying device bluetooth mac address.
+        textView = (TextView) convertView.findViewById(R.id.tv_macaddrs);
         if(deviceAddress != null && deviceAddress.length() > 0){
             textView.setText(deviceAddress);
         }else{
             textView.setText("No address.");
         }
-
         return convertView;
     }
 

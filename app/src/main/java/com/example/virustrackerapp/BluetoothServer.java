@@ -7,6 +7,7 @@ import android.bluetooth.BluetoothGattServer;
 import android.bluetooth.BluetoothGattServerCallback;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
+import android.os.ParcelUuid;
 
 import java.util.UUID;
 
@@ -22,8 +23,8 @@ public class BluetoothServer {
         this.bluetoothManager = bluetoothManager;
         bluetoothGattService = new BluetoothGattService(UUID.fromString(serviceUUID),BluetoothGattService.SERVICE_TYPE_PRIMARY);
         bluetoothGattCharacteristic = new BluetoothGattCharacteristic(UUID.fromString(characteristicUUID), BluetoothGattCharacteristic.PROPERTY_READ, BluetoothGattCharacteristic.PERMISSION_READ);
-        byte[] data = new byte[3];
-        data[0] = 1;
+        String id = "9366DB97-B301-46CE-B5CF-65FDF1C8839F";
+        byte[] data = id.getBytes();
         bluetoothGattCharacteristic.setValue(data);
         bluetoothGattService.addCharacteristic(bluetoothGattCharacteristic);
     }
