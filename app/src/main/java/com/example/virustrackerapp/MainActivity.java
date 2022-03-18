@@ -80,7 +80,7 @@ public class MainActivity extends AppCompatActivity  {
         header.setVisibility(View.INVISIBLE);
         deviceListView.setVisibility(View.INVISIBLE);
 
-        myBleScanner = new BluetoothScanner(this,1000000,-90, getString(R.string.service_uuid));
+        myBleScanner = new BluetoothScanner(this,999999999,-90, getString(R.string.service_uuid));
         myBleAdvertiser = new BluetoothAdvertiser(getString(R.string.service_uuid),this);
         myBluetoothServer = new BluetoothServer(this, getString(R.string.service_uuid), getString(R.string.characteristic_uuid), (BluetoothManager)getSystemService(BLUETOOTH_SERVICE));
         devicesFound = new ArrayList<>();

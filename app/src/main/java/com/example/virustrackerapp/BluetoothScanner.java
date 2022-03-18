@@ -75,7 +75,6 @@ public class BluetoothScanner {
 
     public void scanForDevices(boolean activate){
         if(activate && !scanning){
-            UtilityClass.toast(mainActivity.getApplicationContext(),"Scanning started...");
 
             handler.postDelayed(new Runnable(){
                 @Override
@@ -104,7 +103,6 @@ public class BluetoothScanner {
     }
 
     public void stopScanner(){
-        UtilityClass.toast(mainActivity.getApplicationContext(),"Scanning stopped by User.");
         scanForDevices(false);
     }
 

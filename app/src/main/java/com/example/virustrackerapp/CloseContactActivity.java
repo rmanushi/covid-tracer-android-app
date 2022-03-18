@@ -16,9 +16,14 @@ import androidx.appcompat.app.AppCompatActivity;
 
 public class CloseContactActivity extends AppCompatActivity {
     private BluetoothService bluetoothService;
-    private final String TAG = "Close Contact:";
-    private boolean connected;
+    private final String TAG = "Close Contact: ";
+    private int connected;
     private BluetoothDevice device;
+    private String data;
+    private Button submitBtnCloseContact;
+    private Button cancelBtnCloseContact;
+    private TextView closeContactActivityTv;
+
 
     //Receiver waiting for broadcasts send by the service.
     private final BroadcastReceiver bluetoothServiceBroadcastReceiver = new BroadcastReceiver() {
@@ -28,15 +33,16 @@ public class CloseContactActivity extends AppCompatActivity {
 
             if (BluetoothService.ACTION_CONNECTED.equals(action)) {
                 UtilityClass.toast(getApplicationContext(),"Connected to remote user.");
-                connected = true;
+                connected = 1;
             } else if (BluetoothService.ACTION_DISCONNECTED.equals(action)) {
                 UtilityClass.toast(getApplicationContext(),"Disconnected from remote user.");
-                connected = false;
+                connected = 0;
             }else if(BluetoothService.ACTION_REQUIRED_CHARACTERISTIC_FOUND.equals(action)){
-                UtilityClass.toast(getApplicationContext(),"Found Characteristic");
                 bluetoothService.readCharacteristic(bluetoothService.getAppCharacteristic());
             }else if(BluetoothService.ACTION_CHARACTERISTIC_DATA_READ.equals(action)){
-                UtilityClass.toast(getApplicationContext(),"ID: " + intent.getStringExtra(BluetoothService.CHARACTERISTIC_DATA));
+                data = intent.getStringExtra(BluetoothService.CHARACTERISTIC_DATA);
+                closeContactActivityTv.setText("Are you sure you want to establish close contact with:" + device.getAddress() + " ?");
+                submitBtnCloseContact.setEnabled(true);
             }
         }
     };
@@ -69,14 +75,19 @@ public class CloseContactActivity extends AppCompatActivity {
         Intent intent = getIntent();
         device = intent.getExtras().getParcelable("Device");
 
-        Button submitBtnCloseContact = (Button) findViewById(R.id.submitCloseContactBtn);
-        Button cancelBtnCloseContact = (Button) findViewById(R.id.cancelCloseContactBtn);
-        TextView closeContactActivityTv = (TextView) findViewById(R.id.closeContactTv);
+        submitBtnCloseContact = (Button) findViewById(R.id.submitCloseContactBtn);
+        cancelBtnCloseContact = (Button) findViewById(R.id.cancelCloseContactBtn);
+        closeContactActivityTv = (TextView) findViewById(R.id.closeContactTv);
 
-        closeContactActivityTv.setText("Are you sure you want to establish close contact with:" + device.getAddress() + " ?");
+        submitBtnCloseContact.setEnabled(false);
+        closeContactActivityTv.setText("Please wait app is trying to note down remote used id.");
+
+
         submitBtnCloseContact.setOnClickListener(v -> {
             //UtilityClass.toast(this,"Close Contact Established with: " + device.getAddress());
-            //finish();
+            //
+            UtilityClass.toast(this,"Close Contact Established with: " + data);
+            finish();
         });
 
         //Disconnecting from the remote device once the user presses cancel.
@@ -106,6 +117,7 @@ public class CloseContactActivity extends AppCompatActivity {
         intentFilter.addAction(BluetoothService.ACTION_DISCONNECTED);
         intentFilter.addAction(BluetoothService.ACTION_REQUIRED_CHARACTERISTIC_FOUND);
         intentFilter.addAction(BluetoothService.ACTION_CHARACTERISTIC_DATA_READ);
+        intentFilter.addAction(BluetoothService.ACTION_CONNECTION_FAILED);
         return intentFilter;
     }
 

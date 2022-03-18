@@ -47,7 +47,6 @@ public class BluetoothAdvertiser {
         @Override
         public void onStartSuccess(AdvertiseSettings settingsInEffect) {
             super.onStartSuccess(settingsInEffect);
-            UtilityClass.toast(mainActivity.getApplicationContext(),"Advertising started successfully.");
         }
 
         @Override
@@ -62,7 +61,6 @@ public class BluetoothAdvertiser {
     }
 
     public void stopAdvertiser(){
-        UtilityClass.toast(mainActivity.getApplicationContext(),"Advertising stopped by user.");
         bleAdvertiser.stopAdvertising(advertiseCallback);
     }
 }

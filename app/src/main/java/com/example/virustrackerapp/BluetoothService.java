@@ -16,6 +16,8 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 
@@ -30,6 +32,7 @@ public class BluetoothService extends Service  {
 
     public final static String ACTION_CONNECTED = "com.example.virustrackerapp.ACTION_GATT_CONNECTED";
     public final static String ACTION_DISCONNECTED = "com.example.virustrackerapp.ACTION_GATT_DISCONNECTED";
+    public final static String ACTION_CONNECTION_FAILED = "com.example.virustrackerapp.ACTION_CONNECTION_FAILED";
     public final static String ACTION_REQUIRED_CHARACTERISTIC_FOUND = "com.example.virustrackerapp.ACTION_REQUIRED_CHARACTERISTIC_FOUND";
     public final static String ACTION_CHARACTERISTIC_DATA_READ = "com.example.virustrackerapp.ACTION_CHARACTERISTIC_DATA_READ";
     public final static String CHARACTERISTIC_DATA = "com.example.virustrackerapp.CHARACTERISTIC_DATA";
@@ -98,9 +101,6 @@ public class BluetoothService extends Service  {
     }
 
     private void close() {
-        if (bluetoothGatt == null) {
-            return;
-        }
         bluetoothGatt.close();
         bluetoothGatt = null;
     }
@@ -116,10 +116,18 @@ public class BluetoothService extends Service  {
         Intent intent = new Intent(action);
         final byte[] data = myCharacteristic.getValue();
         final StringBuilder stringBuilder = new StringBuilder(data.length);
+        /*
         for(byte b : data){
             stringBuilder.append(String.format("%02X ", b));
         }
-        intent.putExtra(CHARACTERISTIC_DATA,new String(data) + "\n" + stringBuilder.toString());
+
+         */
+
+        //Charset charset = StandardCharsets.UTF_16;
+        final UUID dataInUUID = UtilityClass.getUUIDFromBytes(data);
+        final String dataInString = dataInUUID.toString();
+        //intent.putExtra(CHARACTERISTIC_DATA,new String(data) + "\n" + stringBuilder.toString());
+        intent.putExtra(CHARACTERISTIC_DATA,dataInString);
         sendBroadcast(intent);
     }
 
@@ -147,11 +155,12 @@ public class BluetoothService extends Service  {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             super.onConnectionStateChange(gatt, status, newState);
-            if(newState == BluetoothProfile.STATE_CONNECTED) {
+            if(status == BluetoothGatt.GATT_SUCCESS){}
+            if (newState == BluetoothProfile.STATE_CONNECTED) {
                 broadcastUpdate(ACTION_CONNECTED);
                 //Discovering services once connected to the gatt server.
                 bluetoothGatt.discoverServices();
-            }else if(newState == BluetoothProfile.STATE_DISCONNECTED) {
+            } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 broadcastUpdate(ACTION_DISCONNECTED);
             }
         }

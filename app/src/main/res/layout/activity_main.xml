@@ -30,10 +30,11 @@
         android:layout_marginTop="170dp"
         android:layout_marginEnd="81dp"
         android:background="@drawable/round_corner_shape"
-        android:backgroundTint="#DCDCDC"
+        android:backgroundTint="@android:color/holo_red_light"
         android:text="App is not active!"
         android:textAlignment="center"
         android:textSize="20sp"
+        android:textColor="@color/black"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
