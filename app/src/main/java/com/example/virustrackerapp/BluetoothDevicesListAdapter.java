@@ -37,7 +37,6 @@ public class BluetoothDevicesListAdapter extends ArrayAdapter<BluetoothDevice> {
     @NonNull
     @Override
     public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-
         if(convertView == null){
             LayoutInflater inflater = (LayoutInflater) myActivity.getApplicationContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             convertView = inflater.inflate(resourceID, parent, false);
@@ -46,7 +45,7 @@ public class BluetoothDevicesListAdapter extends ArrayAdapter<BluetoothDevice> {
         BluetoothDevice device = deviceList.get(position);
         String deviceAddress = device.getAddress();
         TextView textView;
-        //Displaying device bluetooth mac address.
+        //Displaying device bluetooth mac address that is generated each time advertising is initiated.
         textView = (TextView) convertView.findViewById(R.id.tv_macaddrs);
         if(deviceAddress != null && deviceAddress.length() > 0){
             textView.setText(deviceAddress);
@@ -55,6 +54,5 @@ public class BluetoothDevicesListAdapter extends ArrayAdapter<BluetoothDevice> {
         }
         return convertView;
     }
-
 
 }

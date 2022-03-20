@@ -42,8 +42,8 @@ public class BluetoothScanner {
         filters.add(scanFilter);
 
         scanSettings = new ScanSettings
-                .Builder().
-                setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+                .Builder()
+                .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
                 .build();
 
         handler = new Handler();
@@ -63,7 +63,7 @@ public class BluetoothScanner {
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
             super.onScanResult(callbackType, result);
-            mainActivity.add(result.getDevice());
+            mainActivity.addDevice(result.getDevice());
         }
 
         @Override

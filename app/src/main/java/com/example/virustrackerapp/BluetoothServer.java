@@ -7,10 +7,7 @@ import android.bluetooth.BluetoothGattServer;
 import android.bluetooth.BluetoothGattServerCallback;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
-import android.os.ParcelUuid;
 
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 public class BluetoothServer {
@@ -19,20 +16,18 @@ public class BluetoothServer {
     private BluetoothGattCharacteristic bluetoothGattCharacteristic;
     private MainActivity mainActivity;
     private BluetoothManager bluetoothManager;
-    private Charset charset;
     private UUID userID;
 
     public BluetoothServer(MainActivity mainActivity, String serviceUUID, String characteristicUUID, BluetoothManager bluetoothManager) {
         this.mainActivity = mainActivity;
-        charset = StandardCharsets.UTF_16;
         this.bluetoothManager = bluetoothManager;
         bluetoothGattService = new BluetoothGattService(UUID.fromString(serviceUUID),BluetoothGattService.SERVICE_TYPE_PRIMARY);
         bluetoothGattCharacteristic = new BluetoothGattCharacteristic(UUID.fromString(characteristicUUID), BluetoothGattCharacteristic.PROPERTY_READ, BluetoothGattCharacteristic.PERMISSION_READ);
         //Hard coded for testing so far.
-        //String id = "69CBAC73-D1C6-4A3E-BA39-B980E32F4B33";
-        String id = "BD84980A-8693-41DC-8B80-BE475B34ACBF";
+        String id = "69CBAC73-D1C6-4A3E-BA39-B980E32F4B33";
+        //String id = "BD84980A-8693-41DC-8B80-BE475B34ACBF";
         userID = UUID.fromString(id);
-        byte[] data = UtilityClass.getBytesFromUUID(userID);
+        byte[] data = UtilityClass.convertUUIDtoBytes(userID);
         bluetoothGattCharacteristic.setValue(data);
         bluetoothGattService.addCharacteristic(bluetoothGattCharacteristic);
     }

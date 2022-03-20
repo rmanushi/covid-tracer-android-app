@@ -3,7 +3,10 @@ package com.example.virustrackerapp;
 import android.Manifest;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Build;
@@ -19,6 +22,10 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity  {
@@ -30,6 +37,7 @@ public class MainActivity extends AppCompatActivity  {
     private TextView header;
     private TextView appNotActiveTv;
     private final int PERMISSIONS_REQUEST_CODE = 10;
+
 
     private ArrayList<BluetoothDevice> devicesFound;
     private BluetoothDevicesListAdapter adapter;
@@ -47,6 +55,25 @@ public class MainActivity extends AppCompatActivity  {
     private AlertDialog registrationDialog;
     private RadioButton trueRegistrationInfectionBtn, falseRegistrationInfectionBtn, trueRegistrationVaccineBtn, falseRegistrationVaccineBtn;
 
+    //Receiver used to detect the broadcast sent by the CloseContact activity in case the connection attempt to the selected device fails
+    private BroadcastReceiver receiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            BluetoothDevice unavailableDevice = intent.getExtras().getParcelable("unavailableDevice");
+            if(CloseContactActivity.CONNECTION_TO_DEVICE_FAILED.equals(action)){
+                removeDevice(unavailableDevice);
+            }
+        }
+    };
+
+    //Adding the broadcast action to an intent filter;
+    private IntentFilter intentFilter() {
+        final IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(CloseContactActivity.CONNECTION_TO_DEVICE_FAILED);
+        return intentFilter;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -58,7 +85,11 @@ public class MainActivity extends AppCompatActivity  {
         }
 
         //Only initiating the registration dialog the first time the user opens the app.
-        boolean firstRun = getSharedPreferences("PREFERENCE",MODE_PRIVATE).getBoolean("firstRun",true);
+        boolean vaccinationValueEntered = getSharedPreferences("VACCINATION",MODE_PRIVATE).getBoolean("vaccine", false);
+        boolean infectionValueEntered = getSharedPreferences("INFECTION",MODE_PRIVATE).getBoolean("infection", false);
+        //boolean firstRun = getSharedPreferences("PREFERENCE",MODE_PRIVATE).getBoolean("firstRun",true);
+
+
         if(true){
             createRegistrationDialog();
             //Saving the state for the first time the app has been opened.
@@ -67,6 +98,7 @@ public class MainActivity extends AppCompatActivity  {
                     .putBoolean("firstRun", false)
                     .apply();
         }
+
 
         //Initiating current app state value for the scanning function.
         currentAppState = 1;
@@ -91,8 +123,12 @@ public class MainActivity extends AppCompatActivity  {
 
         updateBtn.setOnClickListener(v -> createUpdateDialog());
 
+        //String url_connection_to_mysql = "http://localhost/android_app_covid/db_con_test.php";
+
         scanBtn.setOnClickListener(v -> {
             if(currentAppState == APP_STATE_ON){
+                //connect(url_connection_to_mysql);
+                registerReceiver(receiver,intentFilter());
                 scanBtn.setText("STOP");
                 appNotActiveTv.setVisibility(View.INVISIBLE);
                 startScan();
@@ -101,6 +137,7 @@ public class MainActivity extends AppCompatActivity  {
                 currentAppState = 0;
                 scanBtn.setBackgroundColor(Color.RED);
             }else{
+                unregisterReceiver(receiver);
                 scanBtn.setText("SCAN");
                 stopScan();
                 myBleAdvertiser.stopAdvertiser();
@@ -112,7 +149,7 @@ public class MainActivity extends AppCompatActivity  {
         });
     }
 
-    public void startScan(){
+    private void startScan(){
         //Requesting dangerous permissions for new android update.
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
             if(getApplicationContext().checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED){
@@ -160,14 +197,20 @@ public class MainActivity extends AppCompatActivity  {
     }
 
     //Method called by the scanner in the scan callback in order to update the list of devices found and display them to the user.
-    public void add(BluetoothDevice d){
-        if(!devicesFound.contains(d)){
-            devicesFound.add(d);
+    public void addDevice(BluetoothDevice device){
+        if(!devicesFound.contains(device)){
+            devicesFound.add(device);
             adapter.notifyDataSetChanged();
         }
     }
 
-    public void stopScan(){
+    //Method called by the onReceive method in case a broadcast is received stating that a device is no longer connectable.
+    private void removeDevice(BluetoothDevice device){
+        devicesFound.remove(device);
+        adapter.notifyDataSetChanged();
+    }
+
+    private void stopScan(){
         devicesFound.clear();
         myBleScanner.stopScanner();
         adapter.notifyDataSetChanged();
@@ -176,7 +219,7 @@ public class MainActivity extends AppCompatActivity  {
     }
 
     //Method that creates the update dialog view.
-    public void createUpdateDialog(){
+    private void createUpdateDialog(){
         dialogBuilder = new AlertDialog.Builder(this);
         final View updatePopUpView = getLayoutInflater().inflate(R.layout.update_activity_popup,null);
 
@@ -232,7 +275,7 @@ public class MainActivity extends AppCompatActivity  {
         ///////////////////////End of radio button view changes//////////////////////
     }
 
-    public void createRegistrationDialog(){
+    private void createRegistrationDialog(){
         final int INFECTION_TRUE = 1;
         final int INFECTION_FALSE = 0;
         final int VACCINE_TRUE = 1;
@@ -295,21 +338,47 @@ public class MainActivity extends AppCompatActivity  {
                 }else{
                     enterToDB(0,VACCINE_FALSE,INFECTION_TRUE);//Needs to change to actual db connection.
                 }
+
                 registrationDialog.dismiss();
             }
         });
-
     }
 
-    public void enterToDB(int uid, int x, int y){
+    private void enterToDB(int uid, int x, int y){
         UtilityClass.toast(this,"Entered to db values vaccine: "+x+", infection: "+y+" for user: "+uid+".");
     }
 
     //Method to be called by the click of a list item.
-    public void launchCloseContactActivity(BluetoothDevice bleD){
+    private void launchCloseContactActivity(BluetoothDevice bleD){
         //Creating an intent and passing the selected device to the next activity.
         Intent intent = new Intent(getApplicationContext(), CloseContactActivity.class);
         intent.putExtra("Device", bleD);
         startActivity(intent);
     }
+
+    public static HttpURLConnection connect(String urlAddress) {
+
+        try
+        {
+            URL url=new URL(urlAddress);
+            HttpURLConnection con= (HttpURLConnection) url.openConnection();
+
+            //SET PROPERTIES
+            con.setRequestMethod("POST");
+            con.setConnectTimeout(20000);
+            con.setReadTimeout(20000);
+            con.setDoInput(true);
+            con.setDoOutput(true);
+
+            //RETURN
+            return con;
+
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
 }

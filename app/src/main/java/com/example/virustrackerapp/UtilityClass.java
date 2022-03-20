@@ -39,14 +39,14 @@ public class UtilityClass {
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
     }
 
-    public static byte[] getBytesFromUUID(UUID uuid) {
+    public static byte[] convertUUIDtoBytes(UUID uuid) {
         ByteBuffer bb = ByteBuffer.wrap(new byte[16]);
         bb.putLong(uuid.getMostSignificantBits());
         bb.putLong(uuid.getLeastSignificantBits());
         return bb.array();
     }
 
-    public static UUID getUUIDFromBytes(byte[] bytes) {
+    public static UUID convertBytesToUUID(byte[] bytes) {
         ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
         Long high = byteBuffer.getLong();
         Long low = byteBuffer.getLong();

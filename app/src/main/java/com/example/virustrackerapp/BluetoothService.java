@@ -1,7 +1,6 @@
 package com.example.virustrackerapp;
 
 import android.app.Service;
-import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
@@ -16,23 +15,19 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 
 public class BluetoothService extends Service  {
 
-    private BluetoothAdapter bluetoothAdapter;
     private BluetoothGatt bluetoothGatt;
     private final UUID serviceUUID = UUID.fromString("BB1A3410-B7CA-412C-8A13-AE9D912981AD");
     private final UUID characteristicUUID = UUID.fromString("AD4FC837-06CB-476B-8CB3-DFC6876F187E");
 
     private final static String TAG = "GATT Cli";
-
+    //Action to be broadcasted in specific event occurrences;
     public final static String ACTION_CONNECTED = "com.example.virustrackerapp.ACTION_GATT_CONNECTED";
     public final static String ACTION_DISCONNECTED = "com.example.virustrackerapp.ACTION_GATT_DISCONNECTED";
-    public final static String ACTION_CONNECTION_FAILED = "com.example.virustrackerapp.ACTION_CONNECTION_FAILED";
     public final static String ACTION_REQUIRED_CHARACTERISTIC_FOUND = "com.example.virustrackerapp.ACTION_REQUIRED_CHARACTERISTIC_FOUND";
     public final static String ACTION_CHARACTERISTIC_DATA_READ = "com.example.virustrackerapp.ACTION_CHARACTERISTIC_DATA_READ";
     public final static String CHARACTERISTIC_DATA = "com.example.virustrackerapp.CHARACTERISTIC_DATA";
@@ -78,8 +73,7 @@ public class BluetoothService extends Service  {
     }
 
     public boolean initialize() {
-        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        if (bluetoothAdapter == null) {
+        if (!UtilityClass.checkBluetoothStatus()) {
             Log.i(TAG, "Unable to obtain a BluetoothAdapter.");
             return false;
         }
@@ -115,18 +109,10 @@ public class BluetoothService extends Service  {
     private void broadcastUpdate(final String action, BluetoothGattCharacteristic myCharacteristic){
         Intent intent = new Intent(action);
         final byte[] data = myCharacteristic.getValue();
-        final StringBuilder stringBuilder = new StringBuilder(data.length);
-        /*
-        for(byte b : data){
-            stringBuilder.append(String.format("%02X ", b));
-        }
-
-         */
-
-        //Charset charset = StandardCharsets.UTF_16;
-        final UUID dataInUUID = UtilityClass.getUUIDFromBytes(data);
+        //Converting byte data into a UUID.
+        final UUID dataInUUID = UtilityClass.convertBytesToUUID(data);
+        //Converting UUID data to string for other operations.
         final String dataInString = dataInUUID.toString();
-        //intent.putExtra(CHARACTERISTIC_DATA,new String(data) + "\n" + stringBuilder.toString());
         intent.putExtra(CHARACTERISTIC_DATA,dataInString);
         sendBroadcast(intent);
     }
@@ -155,7 +141,6 @@ public class BluetoothService extends Service  {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             super.onConnectionStateChange(gatt, status, newState);
-            if(status == BluetoothGatt.GATT_SUCCESS){}
             if (newState == BluetoothProfile.STATE_CONNECTED) {
                 broadcastUpdate(ACTION_CONNECTED);
                 //Discovering services once connected to the gatt server.

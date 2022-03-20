@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.widget.Button;
 import android.widget.TextView;
@@ -16,13 +17,27 @@ import androidx.appcompat.app.AppCompatActivity;
 
 public class CloseContactActivity extends AppCompatActivity {
     private BluetoothService bluetoothService;
-    private final String TAG = "Close Contact: ";
-    private int connected;
     private BluetoothDevice device;
     private String data;
     private Button submitBtnCloseContact;
     private Button cancelBtnCloseContact;
     private TextView closeContactActivityTv;
+    private Handler connectionHandler = new Handler();
+    public static final String CONNECTION_TO_DEVICE_FAILED = "com.example.virustrackerapp.CONNECTION_TO_DEVICE_FAILED";
+    private Runnable connectionTimeoutOperation = new Runnable() {
+        @Override
+        public void run() {
+            //In case the app is not able to connect to the other user,
+            // the activity is stopped and the connection is closed.
+            //A broadcast it to be sent that will be received by the main activity in order to update the available device list.
+            Intent connectionFailedIntent = new Intent(CONNECTION_TO_DEVICE_FAILED);
+            connectionFailedIntent.putExtra("unavailableDevice",device);
+            UtilityClass.toast(getApplicationContext(),"This user is no longer connectable.");
+            sendBroadcast(connectionFailedIntent);
+            finish();
+        }
+    };
+    private final int TIMEOUT_LIMIT = 5000;
 
 
     //Receiver waiting for broadcasts send by the service.
@@ -30,13 +45,12 @@ public class CloseContactActivity extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
-
             if (BluetoothService.ACTION_CONNECTED.equals(action)) {
                 UtilityClass.toast(getApplicationContext(),"Connected to remote user.");
-                connected = 1;
+                //In case the connection is achieved the handler timeout operation is discarded.
+                connectionHandler.removeCallbacks(connectionTimeoutOperation);
             } else if (BluetoothService.ACTION_DISCONNECTED.equals(action)) {
                 UtilityClass.toast(getApplicationContext(),"Disconnected from remote user.");
-                connected = 0;
             }else if(BluetoothService.ACTION_REQUIRED_CHARACTERISTIC_FOUND.equals(action)){
                 bluetoothService.readCharacteristic(bluetoothService.getAppCharacteristic());
             }else if(BluetoothService.ACTION_CHARACTERISTIC_DATA_READ.equals(action)){
@@ -57,6 +71,8 @@ public class CloseContactActivity extends AppCompatActivity {
                     UtilityClass.toast(getApplicationContext(),"Unable to initialize bluetooth.");
                     finish();
                 }
+                //Checking for timeout while attempting connection to the other user.
+                connectionHandler.postDelayed(connectionTimeoutOperation, TIMEOUT_LIMIT);
                 bluetoothService.connect(device);
             }
         }
@@ -111,15 +127,12 @@ public class CloseContactActivity extends AppCompatActivity {
     }
 
     //Filter set up to differentiate between the broadcasts sent by the service.
-    private static IntentFilter intentFilter() {
+    private IntentFilter intentFilter() {
         final IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(BluetoothService.ACTION_CONNECTED);
         intentFilter.addAction(BluetoothService.ACTION_DISCONNECTED);
         intentFilter.addAction(BluetoothService.ACTION_REQUIRED_CHARACTERISTIC_FOUND);
         intentFilter.addAction(BluetoothService.ACTION_CHARACTERISTIC_DATA_READ);
-        intentFilter.addAction(BluetoothService.ACTION_CONNECTION_FAILED);
         return intentFilter;
     }
-
-
 }
