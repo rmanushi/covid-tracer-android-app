@@ -7,7 +7,6 @@ import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
-import android.os.Handler;
 import android.os.ParcelUuid;
 
 import java.util.ArrayList;
@@ -15,10 +14,7 @@ import java.util.UUID;
 
 //Class to represent the bluetooth scanner for the application.
 public class BluetoothScanner {
-    private boolean scanning;
-    private Handler handler;
     private MainActivity mainActivity;
-    private long scanPeriod;
     //Used for distance measurement purposes.
     private int rssiValue;
     private ParcelUuid filterUUID;
@@ -27,10 +23,9 @@ public class BluetoothScanner {
     private ScanFilter scanFilter;
     private ScanSettings scanSettings;
 
-    public BluetoothScanner(MainActivity mainActivity, long scanPeriod, int rssiValue, String filterStringUUID) {
+    public BluetoothScanner(MainActivity mainActivity, String filterStringUUID) {
         this.mainActivity = mainActivity;
-        this.scanPeriod = scanPeriod;
-        this.rssiValue = rssiValue;
+        rssiValue = -90;
         filterUUID = new ParcelUuid(UUID.fromString(filterStringUUID));
         filters = new ArrayList<ScanFilter>();
         //Filtering results by service UUID.
@@ -46,7 +41,6 @@ public class BluetoothScanner {
                 .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
                 .build();
 
-        handler = new Handler();
         //Initiating default bluetooth le scanner.
         bleScanner = BluetoothAdapter.getDefaultAdapter().getBluetoothLeScanner();
     }
@@ -73,37 +67,16 @@ public class BluetoothScanner {
         }
     };
 
-    public void scanForDevices(boolean activate){
-        if(activate && !scanning){
-
-            handler.postDelayed(new Runnable(){
-                @Override
-                public void run() {
-                    UtilityClass.toast(mainActivity.getApplicationContext(),"Scanning stopped by handler!");
-                    scanning = false;
-                    bleScanner.stopScan(scanCallback);
-                }
-            },scanPeriod);
-
-            scanning = true;
-            bleScanner.startScan(filters,scanSettings,scanCallback);
-        }else{
-            scanning = false;
-            bleScanner.stopScan(scanCallback);
-        }
-    }
-
-
     public void startScanner(){
         if(!UtilityClass.checkBluetoothStatus()){
             UtilityClass.requestBluetoothActivation(mainActivity);
         }else{
-            scanForDevices(true);
+            bleScanner.startScan(filters,scanSettings,scanCallback);
         }
     }
 
     public void stopScanner(){
-        scanForDevices(false);
+        bleScanner.stopScan(scanCallback);
     }
 
 }

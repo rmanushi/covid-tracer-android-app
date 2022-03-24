@@ -96,7 +96,7 @@ public class CloseContactActivity extends AppCompatActivity {
         closeContactActivityTv = (TextView) findViewById(R.id.closeContactTv);
 
         submitBtnCloseContact.setEnabled(false);
-        closeContactActivityTv.setText("Please wait app is trying to note down remote used id.");
+        closeContactActivityTv.setText("Please wait app is trying to note down remote user id.");
 
 
         submitBtnCloseContact.setOnClickListener(v -> {

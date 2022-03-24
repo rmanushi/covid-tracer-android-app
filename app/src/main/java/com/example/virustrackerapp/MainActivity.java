@@ -11,6 +11,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ListView;
@@ -31,11 +32,13 @@ import java.util.ArrayList;
 public class MainActivity extends AppCompatActivity  {
     private final int APP_STATE_ON = 1;
     private int currentAppState;
+    private Handler appOperationHandler = new Handler();
     //Components in the main page.
     private Button scanBtn;
     private ListView deviceListView;
     private TextView header;
     private TextView appNotActiveTv;
+    private TextView noUsersTv;
     private final int PERMISSIONS_REQUEST_CODE = 10;
 
 
@@ -99,7 +102,6 @@ public class MainActivity extends AppCompatActivity  {
                     .apply();
         }
 
-
         //Initiating current app state value for the scanning function.
         currentAppState = 1;
 
@@ -109,12 +111,16 @@ public class MainActivity extends AppCompatActivity  {
         deviceListView = (ListView) findViewById(R.id.deviceList);
         header = (TextView) findViewById(R.id.nearByBanner);
         appNotActiveTv = (TextView) findViewById(R.id.appNotActive);
-        header.setVisibility(View.INVISIBLE);
+        noUsersTv = (TextView) findViewById(R.id.emptyView);
         deviceListView.setVisibility(View.INVISIBLE);
+        header.setVisibility(View.INVISIBLE);
 
-        myBleScanner = new BluetoothScanner(this,999999999,-90, getString(R.string.service_uuid));
+        myBleScanner = new BluetoothScanner(this, getString(R.string.service_uuid));
         myBleAdvertiser = new BluetoothAdvertiser(getString(R.string.service_uuid),this);
-        myBluetoothServer = new BluetoothServer(this, getString(R.string.service_uuid), getString(R.string.characteristic_uuid), (BluetoothManager)getSystemService(BLUETOOTH_SERVICE));
+        //Hard coded user ids for testing.
+        String id1 = "69CBAC73-D1C6-4A3E-BA39-B980E32F4B33";
+        String id2 = "BD84980A-8693-41DC-8B80-BE475B34ACBF";
+        myBluetoothServer = new BluetoothServer(this, getString(R.string.service_uuid), getString(R.string.characteristic_uuid), id1, (BluetoothManager)getSystemService(BLUETOOTH_SERVICE));
         devicesFound = new ArrayList<>();
         adapter = new BluetoothDevicesListAdapter(this,R.layout.list_item_view, devicesFound);
         deviceListView.setAdapter(adapter);
@@ -126,27 +132,51 @@ public class MainActivity extends AppCompatActivity  {
         //String url_connection_to_mysql = "http://localhost/android_app_covid/db_con_test.php";
 
         scanBtn.setOnClickListener(v -> {
+            deviceListView.setEmptyView(noUsersTv);
             if(currentAppState == APP_STATE_ON){
-                //connect(url_connection_to_mysql);
-                registerReceiver(receiver,intentFilter());
-                scanBtn.setText("STOP");
-                appNotActiveTv.setVisibility(View.INVISIBLE);
-                startScan();
-                myBleAdvertiser.startAdvertiser();
-                myBluetoothServer.startServer();
+                //Handler is used to stop the app operation after
+                // a certain amount of time. This is done to save battery and
+                // to close bluetooth communication channels in the user's device
+                // should they leave the app run in the background by mistake without stopping it.
+                appOperationHandler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        stopAppOperation();
+                        currentAppState = 1;
+                    }
+                    //Delay is set to 3 hours in milliseconds in order to allow
+                    // user to scan while in public spaces for long amount of time.
+                },10800000);
+
+                startAppOperation();
                 currentAppState = 0;
-                scanBtn.setBackgroundColor(Color.RED);
             }else{
-                unregisterReceiver(receiver);
-                scanBtn.setText("SCAN");
-                stopScan();
-                myBleAdvertiser.stopAdvertiser();
-                myBluetoothServer.stopServer();
-                appNotActiveTv.setVisibility(View.VISIBLE);
+                stopAppOperation();
                 currentAppState = 1;
-                scanBtn.setBackgroundColor(Color.parseColor("#333CE5"));
             }
         });
+    }
+
+    private void startAppOperation(){
+        registerReceiver(receiver,intentFilter());
+        scanBtn.setText("STOP");
+        appNotActiveTv.setVisibility(View.INVISIBLE);
+        noUsersTv.setVisibility(View.VISIBLE);
+        startScan();
+        myBleAdvertiser.startAdvertiser();
+        myBluetoothServer.startServer();
+        scanBtn.setBackgroundColor(Color.RED);
+    }
+
+    private void stopAppOperation(){
+        unregisterReceiver(receiver);
+        scanBtn.setText("SCAN");
+        stopScan();
+        myBleAdvertiser.stopAdvertiser();
+        myBluetoothServer.stopServer();
+        appNotActiveTv.setVisibility(View.VISIBLE);
+        noUsersTv.setVisibility(View.INVISIBLE);
+        scanBtn.setBackgroundColor(Color.parseColor("#333CE5"));
     }
 
     private void startScan(){

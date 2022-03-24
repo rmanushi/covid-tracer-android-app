@@ -50,7 +50,6 @@ public class UtilityClass {
         ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
         Long high = byteBuffer.getLong();
         Long low = byteBuffer.getLong();
-
         return new UUID(high, low);
     }
 

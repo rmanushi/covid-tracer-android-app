@@ -18,14 +18,11 @@ public class BluetoothServer {
     private BluetoothManager bluetoothManager;
     private UUID userID;
 
-    public BluetoothServer(MainActivity mainActivity, String serviceUUID, String characteristicUUID, BluetoothManager bluetoothManager) {
+    public BluetoothServer(MainActivity mainActivity, String serviceUUID, String characteristicUUID, String id, BluetoothManager bluetoothManager) {
         this.mainActivity = mainActivity;
         this.bluetoothManager = bluetoothManager;
         bluetoothGattService = new BluetoothGattService(UUID.fromString(serviceUUID),BluetoothGattService.SERVICE_TYPE_PRIMARY);
         bluetoothGattCharacteristic = new BluetoothGattCharacteristic(UUID.fromString(characteristicUUID), BluetoothGattCharacteristic.PROPERTY_READ, BluetoothGattCharacteristic.PERMISSION_READ);
-        //Hard coded for testing so far.
-        String id = "69CBAC73-D1C6-4A3E-BA39-B980E32F4B33";
-        //String id = "BD84980A-8693-41DC-8B80-BE475B34ACBF";
         userID = UUID.fromString(id);
         byte[] data = UtilityClass.convertUUIDtoBytes(userID);
         bluetoothGattCharacteristic.setValue(data);

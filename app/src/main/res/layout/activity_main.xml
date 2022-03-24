@@ -20,7 +20,8 @@
         android:dividerHeight="7dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"></ListView>
+        app:layout_constraintTop_toTopOf="parent"/>
+
 
     <TextView
         android:id="@+id/appNotActive"
@@ -38,6 +39,25 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/emptyView"
+        android:layout_width="176dp"
+        android:layout_height="80dp"
+        android:layout_marginStart="81dp"
+        android:layout_marginTop="140dp"
+        android:layout_marginEnd="81dp"
+        android:background="@drawable/round_corner_shape"
+        android:backgroundTint="@android:color/darker_gray"
+        android:text="No users found!"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        android:visibility="invisible"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
 
     <Button
         android:id="@+id/scanBtn"
