@@ -1,14 +1,18 @@
 package com.example.virustrackerapp;
 
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -23,11 +27,23 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.ProtocolException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity  {
     private final int APP_STATE_ON = 1;
@@ -40,6 +56,7 @@ public class MainActivity extends AppCompatActivity  {
     private TextView appNotActiveTv;
     private TextView noUsersTv;
     private final int PERMISSIONS_REQUEST_CODE = 10;
+    private ProgressDialog progressDialog;
 
 
     private ArrayList<BluetoothDevice> devicesFound;
@@ -48,18 +65,16 @@ public class MainActivity extends AppCompatActivity  {
     private BluetoothAdvertiser myBleAdvertiser;
     private BluetoothServer myBluetoothServer;
 
+    private SharedPreferences sharedPreferences;
+
 
     //Components that are going to be shown in the update pop up.
     private AlertDialog.Builder dialogBuilder;
     private AlertDialog updateDialog;
     private RadioButton trueUpdateInfectionBtn, falseUpdateInfectionBtn, trueUpdateVaccineBtn, falseUpdateVaccineBtn;
 
-    //Components that are going to be shown in the registration pop up.
-    private AlertDialog registrationDialog;
-    private RadioButton trueRegistrationInfectionBtn, falseRegistrationInfectionBtn, trueRegistrationVaccineBtn, falseRegistrationVaccineBtn;
-
     //Receiver used to detect the broadcast sent by the CloseContact activity in case the connection attempt to the selected device fails
-    private BroadcastReceiver receiver = new BroadcastReceiver() {
+    private final BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
@@ -88,18 +103,19 @@ public class MainActivity extends AppCompatActivity  {
         }
 
         //Only initiating the registration dialog the first time the user opens the app.
-        boolean vaccinationValueEntered = getSharedPreferences("VACCINATION",MODE_PRIVATE).getBoolean("vaccine", false);
-        boolean infectionValueEntered = getSharedPreferences("INFECTION",MODE_PRIVATE).getBoolean("infection", false);
-        //boolean firstRun = getSharedPreferences("PREFERENCE",MODE_PRIVATE).getBoolean("firstRun",true);
+        sharedPreferences = getSharedPreferences(getString(R.string.shared_preference_key),MODE_PRIVATE);
+        int vaccinationValueEntered = sharedPreferences.getInt("vaccination",0);
+        int infectionValueEntered = sharedPreferences.getInt("infection",0);
+        String userIdentifier = sharedPreferences.getString("uid",null);
+        boolean isUserRegistered = sharedPreferences.getBoolean("registration",false);
 
-
-        if(true){
-            createRegistrationDialog();
-            //Saving the state for the first time the app has been opened.
-            getSharedPreferences("PREFERENCE", MODE_PRIVATE)
-                    .edit()
-                    .putBoolean("firstRun", false)
-                    .apply();
+        if(!isUserRegistered && userIdentifier == null){
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            UUID userUUID = UUID.randomUUID();
+            editor.putString("uid",userUUID.toString());
+            editor.putBoolean("registration", true);
+            editor.apply();
+            showRegistrationDialog();
         }
 
         //Initiating current app state value for the scanning function.
@@ -117,10 +133,7 @@ public class MainActivity extends AppCompatActivity  {
 
         myBleScanner = new BluetoothScanner(this, getString(R.string.service_uuid));
         myBleAdvertiser = new BluetoothAdvertiser(getString(R.string.service_uuid),this);
-        //Hard coded user ids for testing.
-        String id1 = "69CBAC73-D1C6-4A3E-BA39-B980E32F4B33";
-        String id2 = "BD84980A-8693-41DC-8B80-BE475B34ACBF";
-        myBluetoothServer = new BluetoothServer(this, getString(R.string.service_uuid), getString(R.string.characteristic_uuid), id1, (BluetoothManager)getSystemService(BLUETOOTH_SERVICE));
+        myBluetoothServer = new BluetoothServer(this, getString(R.string.service_uuid), getString(R.string.characteristic_uuid), sharedPreferences.getString("uid",null), (BluetoothManager)getSystemService(BLUETOOTH_SERVICE));
         devicesFound = new ArrayList<>();
         adapter = new BluetoothDevicesListAdapter(this,R.layout.list_item_view, devicesFound);
         deviceListView.setAdapter(adapter);
@@ -129,8 +142,6 @@ public class MainActivity extends AppCompatActivity  {
 
         updateBtn.setOnClickListener(v -> createUpdateDialog());
 
-        //String url_connection_to_mysql = "http://localhost/android_app_covid/db_con_test.php";
-
         scanBtn.setOnClickListener(v -> {
             deviceListView.setEmptyView(noUsersTv);
             if(currentAppState == APP_STATE_ON){
@@ -138,14 +149,11 @@ public class MainActivity extends AppCompatActivity  {
                 // a certain amount of time. This is done to save battery and
                 // to close bluetooth communication channels in the user's device
                 // should they leave the app run in the background by mistake without stopping it.
-                appOperationHandler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        stopAppOperation();
-                        currentAppState = 1;
-                    }
-                    //Delay is set to 3 hours in milliseconds in order to allow
-                    // user to scan while in public spaces for long amount of time.
+                //Delay is set to 3 hours in milliseconds in order to allow
+                // user to scan while in public spaces for long amount of time.
+                appOperationHandler.postDelayed(() -> {
+                    stopAppOperation();
+                    currentAppState = 1;
                 },10800000);
 
                 startAppOperation();
@@ -305,77 +313,15 @@ public class MainActivity extends AppCompatActivity  {
         ///////////////////////End of radio button view changes//////////////////////
     }
 
-    private void createRegistrationDialog(){
-        final int INFECTION_TRUE = 1;
-        final int INFECTION_FALSE = 0;
-        final int VACCINE_TRUE = 1;
-        final int VACCINE_FALSE = 0;
+    private void showRegistrationDialog(){
         dialogBuilder = new AlertDialog.Builder(this);
-        final View registrationPopUpView = getLayoutInflater().inflate(R.layout.registration_activity_popup,null);
-
-        //Setting up submit and cancel buttons to their components in the registration layout.
-        Button registrationPopUpCancelBtn = (Button) registrationPopUpView.findViewById(R.id.cancelRegistrationBtn);
-        Button registrationPopUpSubmitBtn = (Button) registrationPopUpView.findViewById(R.id.submitRegistrationBtn);
-
-        //Setting up radio buttons to their components in the registration layout.
-        trueRegistrationInfectionBtn = (RadioButton) registrationPopUpView.findViewById(R.id.infectionTrueBtnReg);
-        falseRegistrationInfectionBtn = (RadioButton) registrationPopUpView.findViewById(R.id.infectionFalseBtnReg);
-        trueRegistrationVaccineBtn = (RadioButton) registrationPopUpView.findViewById(R.id.trueVaccineBtnReg);
-        falseRegistrationVaccineBtn = (RadioButton) registrationPopUpView.findViewById(R.id.falseRegistrationVaccineBtn);
-
-        //Setting up registration dialog view with new assigned components in the main activity.
-        dialogBuilder.setView(registrationPopUpView);
-        registrationDialog = dialogBuilder.create();
-        registrationDialog.show();
-
-        registrationPopUpCancelBtn.setOnClickListener(v -> UtilityClass.toast(this,"Registration is required to use the application."));
-
-        ////////////////////Radio button changes when they are pressed registration////////////////////
-        trueRegistrationVaccineBtn.setOnClickListener(v -> {
-            trueRegistrationVaccineBtn.setChecked(true);
-            falseRegistrationVaccineBtn.setChecked(false);
-        });
-
-        falseRegistrationVaccineBtn.setOnClickListener(v -> {
-            falseRegistrationVaccineBtn.setChecked(true);
-            trueRegistrationVaccineBtn.setChecked(false);
-        });
-
-        trueRegistrationInfectionBtn.setOnClickListener(v -> {
-            trueRegistrationInfectionBtn.setChecked(true);
-            falseRegistrationInfectionBtn.setChecked(false);
-        });
-
-        falseRegistrationInfectionBtn.setOnClickListener(v -> {
-            falseRegistrationInfectionBtn.setChecked(true);
-            trueRegistrationInfectionBtn.setChecked(false);
-        });
-        ///////////////////////End of radio button view changes registration//////////////////////
-
-        //Checking that user input is valid while selecting values for registration.
-        registrationPopUpSubmitBtn.setOnClickListener(v -> {
-            if(!trueRegistrationVaccineBtn.isChecked() && !falseRegistrationVaccineBtn.isChecked()){
-                UtilityClass.toast(this,"Error: Please select a value for vaccination in order to submit!");
-            }else if(!trueRegistrationInfectionBtn.isChecked() && !falseRegistrationInfectionBtn.isChecked()){
-                UtilityClass.toast(this,"Error: Please select a value for infection in order to submit!");
-            }else{
-                if(trueRegistrationVaccineBtn.isChecked() && trueRegistrationInfectionBtn.isChecked()){
-                    enterToDB(0,VACCINE_TRUE,INFECTION_TRUE);//Needs to change to actual db connection.
-                }else if(!trueRegistrationVaccineBtn.isChecked() && !trueRegistrationInfectionBtn.isChecked()){
-                    enterToDB(0,VACCINE_FALSE,INFECTION_FALSE);//Needs to change to actual db connection.
-                }else if(trueRegistrationVaccineBtn.isChecked() && !trueRegistrationInfectionBtn.isChecked()){
-                    enterToDB(0,VACCINE_TRUE,INFECTION_FALSE);//Needs to change to actual db connection.
-                }else{
-                    enterToDB(0,VACCINE_FALSE,INFECTION_TRUE);//Needs to change to actual db connection.
-                }
-
-                registrationDialog.dismiss();
-            }
-        });
-    }
-
-    private void enterToDB(int uid, int x, int y){
-        UtilityClass.toast(this,"Entered to db values vaccine: "+x+", infection: "+y+" for user: "+uid+".");
+        dialogBuilder.setTitle("Welcome to the Virus Tracker App");
+        dialogBuilder.setMessage("A new user profile has been automatically created for you. " +
+                " Both your infection and full vaccination status have been set to false by default." +
+                " Feel free to update your profile accordingly using the profile section of the application.");
+        dialogBuilder.setOnDismissListener((dialog)-> new RegistrationInsert().execute());
+        dialogBuilder.setPositiveButton("Ok",(dialog, which) -> dialog.dismiss());
+        dialogBuilder.show();
     }
 
     //Method to be called by the click of a list item.
@@ -386,29 +332,143 @@ public class MainActivity extends AppCompatActivity  {
         startActivity(intent);
     }
 
-    public static HttpURLConnection connect(String urlAddress) {
-
-        try
-        {
-            URL url=new URL(urlAddress);
-            HttpURLConnection con= (HttpURLConnection) url.openConnection();
-
-            //SET PROPERTIES
-            con.setRequestMethod("POST");
-            con.setConnectTimeout(20000);
-            con.setReadTimeout(20000);
-            con.setDoInput(true);
-            con.setDoOutput(true);
-
-            //RETURN
-            return con;
-
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+    private class RegistrationInsert extends AsyncTask <String, String, String> {
+        /**
+         * Runs on the UI thread before {@link #doInBackground}.
+         * Invoked directly by {@link #execute} or {@link #executeOnExecutor}.
+         * The default version does nothing.
+         *
+         * @see #onPostExecute
+         * @see #doInBackground
+         */
+        @Override
+        protected void onPreExecute() {
+            //Showing progress dialog to the user to inform of the running task during registration.
+            super.onPreExecute();
+            progressDialog = new ProgressDialog(MainActivity.this);
+            progressDialog.setTitle("User Registration");
+            progressDialog.setMessage("Registering user Please Wait..");
+            progressDialog.setCancelable(false);
+            progressDialog.show();
         }
-        return null;
-    }
 
+        /**
+         * Override this method to perform a computation on a background thread. The
+         * specified parameters are the parameters passed to {@link #execute}
+         * by the caller of this task.
+         * <p>
+         * This will normally run on a background thread. But to better
+         * support testing frameworks, it is recommended that this also tolerates
+         * direct execution on the foreground thread, as part of the {@link #execute} call.
+         * <p>
+         * This method can call {@link #publishProgress} to publish updates
+         * on the UI thread.
+         *
+         * @param strings The parameters of the task.
+         * @return A result, defined by the subclass of this task.
+         * @see #onPreExecute()
+         * @see #onPostExecute
+         * @see #publishProgress
+         */
+        @Override
+        protected String doInBackground(String... strings) {
+            //String id1 = "69CBAC73-D1C6-4A3E-BA39-B980E32F4B33";
+            String id1 = sharedPreferences.getString("uid",null);
+            String userRegistrationURL = getString(R.string.registration_insert_url);
+            try {
+                URL url = new URL(userRegistrationURL);
+                HttpURLConnection con = (HttpURLConnection) url.openConnection();
+                con.setReadTimeout(15000);
+                con.setConnectTimeout(15000);
+                con.setRequestMethod("POST");
+                con.setDoInput(true);
+                con.setDoOutput(true);
+
+                Uri.Builder builder = new Uri.Builder().appendQueryParameter("userID", id1);
+                String query = builder.build().getEncodedQuery();
+
+                //Connection channel to send data to server.
+                OutputStream outputStream = con.getOutputStream();
+                BufferedWriter bufferedWriter = new BufferedWriter(
+                        new OutputStreamWriter(outputStream, StandardCharsets.UTF_8));
+                bufferedWriter.write(query);
+                bufferedWriter.flush();
+                bufferedWriter.close();
+                outputStream.close();
+                con.connect();
+
+                int responseCode = con.getResponseCode();
+
+                //Checking server response code.
+                if(responseCode == HttpURLConnection.HTTP_OK){
+                    //Getting server response.
+                    InputStream input = con.getInputStream();
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(input));
+                    StringBuilder serverResponse = new StringBuilder();
+                    String line;
+
+                    while ((line = reader.readLine()) != null) {
+                        serverResponse.append(line);
+                    }
+
+                    //Turning response into json format.
+                    JSONObject jsonResponse = new JSONObject(String.valueOf(serverResponse));
+                    //Extracting success value from the json format.
+                    int success = jsonResponse.getInt("success");
+
+                    //Checking json response in case the operation was successful or not.
+                    Thread thread;
+                    if(success == 1) {
+                        //Success message shown on the UI thread.
+                        thread = new Thread() {
+                            public void run() {
+                                runOnUiThread(() -> UtilityClass.toast(getApplicationContext(), "User registration completed."));
+                            }
+                        };
+
+                    }else{
+                        //Error message to be shown in the UI thread.
+                        thread = new Thread() {
+                            public void run() {
+                                runOnUiThread(() -> UtilityClass.toast(getApplicationContext(), "Unable to register user."));
+                            }
+                        };
+                    }
+                    thread.start();
+                }else{
+                    //Error message to be shown in the UI thread.
+                    Thread thread = new Thread(){
+                        public void run(){
+                            runOnUiThread(() -> UtilityClass.toast(getApplicationContext(),"Failed to establish connection to the server."));
+                        }
+                    };
+                    thread.start();
+                }
+
+            } catch (IOException | JSONException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        /**
+         * <p>Runs on the UI thread after {@link #doInBackground}. The
+         * specified result is the value returned by {@link #doInBackground}.
+         * To better support testing frameworks, it is recommended that this be
+         * written to tolerate direct execution as part of the execute() call.
+         * The default version does nothing.</p>
+         *
+         * <p>This method won't be invoked if the task was cancelled.</p>
+         *
+         * @param s The result of the operation computed by {@link #doInBackground}.
+         * @see #onPreExecute
+         * @see #doInBackground
+         */
+        @Override
+        protected void onPostExecute(String s) {
+            //Removing progress dialog once the registration task is completed.
+            super.onPostExecute(s);
+            progressDialog.dismiss();
+        }
+    }
 }

@@ -3,6 +3,11 @@
     <string name="service_uuid">BB1A3410-B7CA-412C-8A13-AE9D912981AD</string>
     <string name="characteristic_uuid">AD4FC837-06CB-476B-8CB3-DFC6876F187E</string>
     <string name="title_activity_close_contact">CloseContactActivity</string>
+    <string name="shared_preference_key">VIRUS_TRACKER_APP_PREFERENCE_KEY</string>
+    <string name="registration_insert_url">http://192.168.1.8:8888/android_app_covid/registrationInsert.php</string>
+    <string name="close_contact_insert_url">http://192.168.1.8:8888/android_app_covid/insertCloseContact.php</string>
+    <string name="update_user_profile_url">http://192.168.1.8:8888/android_app_covid/updateProfile.php</string>
+    <string name="infection_contact_search_url">http://192.168.1.8:8888/android_app_covid/searchForInfectionContact.php</string>
     <!-- Strings used for fragments for navigation -->
     <string name="first_fragment_label">First Fragment</string>
     <string name="second_fragment_label">Second Fragment</string>
