@@ -38,8 +38,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -56,7 +54,7 @@ public class MainActivity extends AppCompatActivity  {
     private TextView appNotActiveTv;
     private TextView noUsersTv;
     private final int PERMISSIONS_REQUEST_CODE = 10;
-    private ProgressDialog progressDialog;
+    //private ProgressDialog progressDialog;
 
 
     private ArrayList<BluetoothDevice> devicesFound;
@@ -78,9 +76,19 @@ public class MainActivity extends AppCompatActivity  {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            BluetoothDevice unavailableDevice = intent.getExtras().getParcelable("unavailableDevice");
             if(CloseContactActivity.CONNECTION_TO_DEVICE_FAILED.equals(action)){
+                BluetoothDevice unavailableDevice = intent.getExtras().getParcelable("unavailableDevice");
                 removeDevice(unavailableDevice);
+            }else if(CloseContactActivity.CLOSE_CONTACT_ALREADY_ESTABLISHED.equals(action)){
+                BluetoothDevice alreadyConnectedUserDevice = intent.getExtras().getParcelable("alreadyConnectedUserDevice");
+                removeDevice(alreadyConnectedUserDevice);
+                UtilityClass.toast(getApplicationContext(), "Close contact has already been established with this user before.");
+            }else if(CloseContactActivity.CLOSE_CONTACT_SUCCESS.equals(action)){
+                BluetoothDevice closeContactSuccessDevice = intent.getExtras().getParcelable("connectedDeviceSuccess");
+                removeDevice(closeContactSuccessDevice);
+                UtilityClass.toast(getApplicationContext(), "Close contact established successfully.");
+            }else if(CloseContactActivity.CLOSE_CONTACT_INTERNAL_SQL_ERROR.equals(action) || CloseContactActivity.CLOSE_CONTACT_SERVER_CONNECTION_ERROR.equals(action)){
+                UtilityClass.toast(getApplicationContext(), "Internal server error: Unable to establish close contact with this user.");
             }
         }
     };
@@ -89,6 +97,10 @@ public class MainActivity extends AppCompatActivity  {
     private IntentFilter intentFilter() {
         final IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(CloseContactActivity.CONNECTION_TO_DEVICE_FAILED);
+        intentFilter.addAction(CloseContactActivity.CLOSE_CONTACT_ALREADY_ESTABLISHED);
+        intentFilter.addAction(CloseContactActivity.CLOSE_CONTACT_SUCCESS);
+        intentFilter.addAction(CloseContactActivity.CLOSE_CONTACT_INTERNAL_SQL_ERROR);
+        intentFilter.addAction(CloseContactActivity.CLOSE_CONTACT_SERVER_CONNECTION_ERROR);
         return intentFilter;
     }
 
@@ -104,8 +116,8 @@ public class MainActivity extends AppCompatActivity  {
 
         //Only initiating the registration dialog the first time the user opens the app.
         sharedPreferences = getSharedPreferences(getString(R.string.shared_preference_key),MODE_PRIVATE);
-        int vaccinationValueEntered = sharedPreferences.getInt("vaccination",0);
-        int infectionValueEntered = sharedPreferences.getInt("infection",0);
+        sharedPreferences.getInt("vaccination",0);
+        sharedPreferences.getInt("infection",0);
         String userIdentifier = sharedPreferences.getString("uid",null);
         boolean isUserRegistered = sharedPreferences.getBoolean("registration",false);
 
@@ -115,7 +127,7 @@ public class MainActivity extends AppCompatActivity  {
             editor.putString("uid",userUUID.toString());
             editor.putBoolean("registration", true);
             editor.apply();
-            showRegistrationDialog();
+            registrationProcedure();
         }
 
         //Initiating current app state value for the scanning function.
@@ -313,7 +325,7 @@ public class MainActivity extends AppCompatActivity  {
         ///////////////////////End of radio button view changes//////////////////////
     }
 
-    private void showRegistrationDialog(){
+    private void registrationProcedure(){
         dialogBuilder = new AlertDialog.Builder(this);
         dialogBuilder.setTitle("Welcome to the Virus Tracker App");
         dialogBuilder.setMessage("A new user profile has been automatically created for you. " +
@@ -332,7 +344,11 @@ public class MainActivity extends AppCompatActivity  {
         startActivity(intent);
     }
 
+    //Private class representing a background task for user registration (insertion into the database).
     private class RegistrationInsert extends AsyncTask <String, String, String> {
+
+        ProgressDialog progressDialog = new ProgressDialog(MainActivity.this);
+
         /**
          * Runs on the UI thread before {@link #doInBackground}.
          * Invoked directly by {@link #execute} or {@link #executeOnExecutor}.
@@ -345,7 +361,8 @@ public class MainActivity extends AppCompatActivity  {
         protected void onPreExecute() {
             //Showing progress dialog to the user to inform of the running task during registration.
             super.onPreExecute();
-            progressDialog = new ProgressDialog(MainActivity.this);
+            //ProgressDialog progressDialog = new ProgressDialog(MainActivity.this);
+            //progressDialog = new ProgressDialog(MainActivity.this);
             progressDialog.setTitle("User Registration");
             progressDialog.setMessage("Registering user Please Wait..");
             progressDialog.setCancelable(false);
@@ -372,19 +389,22 @@ public class MainActivity extends AppCompatActivity  {
          */
         @Override
         protected String doInBackground(String... strings) {
-            //String id1 = "69CBAC73-D1C6-4A3E-BA39-B980E32F4B33";
-            String id1 = sharedPreferences.getString("uid",null);
+            //Getting user id stored into the shared preferences.
+            String id = sharedPreferences.getString("uid",null);
+            //Getting pre-determined url from the string resource file.
             String userRegistrationURL = getString(R.string.registration_insert_url);
             try {
                 URL url = new URL(userRegistrationURL);
                 HttpURLConnection con = (HttpURLConnection) url.openConnection();
+                //Setting timeouts for server response and connection.
                 con.setReadTimeout(15000);
                 con.setConnectTimeout(15000);
+                //Setting method to send over data.
                 con.setRequestMethod("POST");
                 con.setDoInput(true);
                 con.setDoOutput(true);
 
-                Uri.Builder builder = new Uri.Builder().appendQueryParameter("userID", id1);
+                Uri.Builder builder = new Uri.Builder().appendQueryParameter("userID", id);
                 String query = builder.build().getEncodedQuery();
 
                 //Connection channel to send data to server.
@@ -417,7 +437,7 @@ public class MainActivity extends AppCompatActivity  {
                     int success = jsonResponse.getInt("success");
 
                     //Checking json response in case the operation was successful or not.
-                    Thread thread;
+                    Thread thread; //New thread for displaying messages to the UI.
                     if(success == 1) {
                         //Success message shown on the UI thread.
                         thread = new Thread() {
@@ -425,7 +445,6 @@ public class MainActivity extends AppCompatActivity  {
                                 runOnUiThread(() -> UtilityClass.toast(getApplicationContext(), "User registration completed."));
                             }
                         };
-
                     }else{
                         //Error message to be shown in the UI thread.
                         thread = new Thread() {
@@ -435,6 +454,8 @@ public class MainActivity extends AppCompatActivity  {
                         };
                     }
                     thread.start();
+                    //Disconnecting once the message is received.
+                    con.disconnect();
                 }else{
                     //Error message to be shown in the UI thread.
                     Thread thread = new Thread(){
@@ -443,8 +464,8 @@ public class MainActivity extends AppCompatActivity  {
                         }
                     };
                     thread.start();
+                    con.disconnect();
                 }
-
             } catch (IOException | JSONException e) {
                 e.printStackTrace();
             }

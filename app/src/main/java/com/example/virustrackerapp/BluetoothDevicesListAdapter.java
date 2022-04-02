@@ -54,5 +54,4 @@ public class BluetoothDevicesListAdapter extends ArrayAdapter<BluetoothDevice> {
         }
         return convertView;
     }
-
 }

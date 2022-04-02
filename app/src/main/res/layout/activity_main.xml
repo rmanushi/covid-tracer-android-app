@@ -94,7 +94,7 @@
         android:layout_height="19dp"
         android:background="#2196F3"
         android:backgroundTint="#03A9F4"
-        android:text="Near By Users"
+        android:text="Nearby Users"
         android:textAlignment="center"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.495"

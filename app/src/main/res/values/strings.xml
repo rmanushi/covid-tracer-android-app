@@ -8,6 +8,7 @@
     <string name="close_contact_insert_url">http://192.168.1.8:8888/android_app_covid/insertCloseContact.php</string>
     <string name="update_user_profile_url">http://192.168.1.8:8888/android_app_covid/updateProfile.php</string>
     <string name="infection_contact_search_url">http://192.168.1.8:8888/android_app_covid/searchForInfectionContact.php</string>
+    <string name="error_message_json_response">Duplicate entry</string>
     <!-- Strings used for fragments for navigation -->
     <string name="first_fragment_label">First Fragment</string>
     <string name="second_fragment_label">Second Fragment</string>

@@ -1,5 +1,6 @@
 package com.example.virustrackerapp;
 
+import android.app.ProgressDialog;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -7,6 +8,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -14,6 +18,20 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 
 public class CloseContactActivity extends AppCompatActivity {
     private BluetoothService bluetoothService;
@@ -24,7 +42,11 @@ public class CloseContactActivity extends AppCompatActivity {
     private TextView closeContactActivityTv;
     private Handler connectionHandler = new Handler();
     public static final String CONNECTION_TO_DEVICE_FAILED = "com.example.virustrackerapp.CONNECTION_TO_DEVICE_FAILED";
-    private Runnable connectionTimeoutOperation = new Runnable() {
+    public static final String CLOSE_CONTACT_SUCCESS = "com.example.virustrackerapp.CLOSE_CONTACT_SUCCESS";
+    public static final String CLOSE_CONTACT_ALREADY_ESTABLISHED = "com.example.virustrackerapp.CLOSE_CONTACT_ALREADY_ESTABLISHED";
+    public static final String CLOSE_CONTACT_INTERNAL_SQL_ERROR = "com.example.virustrackerapp.CLOSE_CONTACT_INTERNAL_SQL_ERROR";
+    public static final String CLOSE_CONTACT_SERVER_CONNECTION_ERROR = "com.example.virustrackerapp.CLOSE_CONTACT_SERVER_CONNECTION_ERROR";
+    private final Runnable connectionTimeoutOperation = new Runnable() {
         @Override
         public void run() {
             //In case the app is not able to connect to the other user,
@@ -100,10 +122,7 @@ public class CloseContactActivity extends AppCompatActivity {
 
 
         submitBtnCloseContact.setOnClickListener(v -> {
-            //UtilityClass.toast(this,"Close Contact Established with: " + device.getAddress());
-            //
-            UtilityClass.toast(this,"Close Contact Established with: " + data);
-            finish();
+            new CloseContactInsert().execute();
         });
 
         //Disconnecting from the remote device once the user presses cancel.
@@ -134,5 +153,163 @@ public class CloseContactActivity extends AppCompatActivity {
         intentFilter.addAction(BluetoothService.ACTION_REQUIRED_CHARACTERISTIC_FOUND);
         intentFilter.addAction(BluetoothService.ACTION_CHARACTERISTIC_DATA_READ);
         return intentFilter;
+    }
+
+    //Private class representing the establishment of close contact between 2 users, inserting a new entry into the database contacts table.
+    private class CloseContactInsert extends AsyncTask<String, String, String>{
+
+        ProgressDialog progressDialog = new ProgressDialog(CloseContactActivity.this);
+
+        /**
+         * Runs on the UI thread before {@link #doInBackground}.
+         * Invoked directly by {@link #execute} or {@link #executeOnExecutor}.
+         * The default version does nothing.
+         *
+         * @see #onPostExecute
+         * @see #doInBackground
+         */
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            progressDialog.setTitle("Close Contact Establishment");
+            progressDialog.setMessage("Establishing close contact Please Wait...");
+            progressDialog.setCancelable(false);
+            progressDialog.show();
+        }
+
+        /**
+         * Override this method to perform a computation on a background thread. The
+         * specified parameters are the parameters passed to {@link #execute}
+         * by the caller of this task.
+         * <p>
+         * This will normally run on a background thread. But to better
+         * support testing frameworks, it is recommended that this also tolerates
+         * direct execution on the foreground thread, as part of the {@link #execute} call.
+         * <p>
+         * This method can call {@link #publishProgress} to publish updates
+         * on the UI thread.
+         *
+         * @param strings The parameters of the task.
+         * @return A result, defined by the subclass of this task.
+         * @see #onPreExecute()
+         * @see #onPostExecute
+         * @see #publishProgress
+         */
+        @Override
+        protected String doInBackground(String... strings) {
+            SharedPreferences sharedPreferences = getSharedPreferences(getString(R.string.shared_preference_key),MODE_PRIVATE);
+            String idOfCurrentUser = sharedPreferences.getString("uid",null);
+            String idOfRemoteUser = data;
+            String closeContactInsertURL = getString(R.string.close_contact_insert_url);
+
+            try {
+                URL url = new URL(closeContactInsertURL);
+                HttpURLConnection con = (HttpURLConnection) url.openConnection();
+                //Setting timeouts for server response and connection.
+                con.setReadTimeout(15000);
+                con.setConnectTimeout(15000);
+                //Setting method to send over data.
+                con.setRequestMethod("POST");
+                con.setDoInput(true);
+                con.setDoOutput(true);
+
+                Uri.Builder builder = new Uri.Builder();
+                builder.appendQueryParameter("user_x",idOfCurrentUser);
+                builder.appendQueryParameter("user_y", idOfRemoteUser);
+                String query = builder.build().getEncodedQuery();
+
+                //Connection channel to send data to server.
+                OutputStream outputStream = con.getOutputStream();
+                BufferedWriter bufferedWriter = new BufferedWriter(
+                        new OutputStreamWriter(outputStream, StandardCharsets.UTF_8));
+                bufferedWriter.write(query);
+                bufferedWriter.flush();
+                bufferedWriter.close();
+                outputStream.close();
+                con.connect();
+
+                int responseCode = con.getResponseCode();
+
+                //Checking server response code.
+                if(responseCode == HttpURLConnection.HTTP_OK){
+                    //Getting server response.
+                    InputStream input = con.getInputStream();
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(input));
+                    StringBuilder serverResponse = new StringBuilder();
+                    String line;
+
+                    while ((line = reader.readLine()) != null) {
+                        serverResponse.append(line);
+                    }
+
+                    //Turning response into json format.
+                    JSONObject jsonResponse = new JSONObject(String.valueOf(serverResponse));
+                    //Extracting success value from the json format.
+                    int success = jsonResponse.getInt("success");
+                    String message = jsonResponse.getString("message");
+
+                    //Checking json response in case the operation was successful or not.
+                    if(success == 1) {
+                        //Sending message to MainActivity to delete device from discovery after the user establishes close contact with them.
+                        broadcastToMainActivity(CLOSE_CONTACT_SUCCESS,"connectedDeviceSuccess",device);
+                    }else if(success == 0 || message.contains(getString(R.string.error_message_json_response))){
+                        //Sending broadcast to MainActivity to delete from the discovery list to which the user is already connected.
+                        broadcastToMainActivity(CLOSE_CONTACT_ALREADY_ESTABLISHED,"alreadyConnectedUserDevice",device);
+                    }else{
+                        broadcastToMainActivity(CLOSE_CONTACT_INTERNAL_SQL_ERROR);
+                    }
+                    //Disconnecting once the message is received and the broadcast is sent.
+                    con.disconnect();
+                }else{
+                    broadcastToMainActivity(CLOSE_CONTACT_SERVER_CONNECTION_ERROR);
+                }
+            } catch (IOException | JSONException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        /**
+         * <p>Runs on the UI thread after {@link #doInBackground}. The
+         * specified result is the value returned by {@link #doInBackground}.
+         * To better support testing frameworks, it is recommended that this be
+         * written to tolerate direct execution as part of the execute() call.
+         * The default version does nothing.</p>
+         *
+         * <p>This method won't be invoked if the task was cancelled.</p>
+         *
+         * @param s The result of the operation computed by {@link #doInBackground}.
+         * @see #onPreExecute
+         * @see #doInBackground
+         */
+        @Override
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+            progressDialog.dismiss();
+            /*
+            Handler timeoutHandler = new Handler();
+            timeoutHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    broadcastToMainActivity(CLOSE_CONTACT_SERVER_CONNECTION_ERROR);
+                }
+            },5000);
+             */
+            //Finish activity after progress dialog is dismissed in order to prevent leaks.
+            finish();
+        }
+
+        //Method to send broadcasts containing the device for deletion in MainActivity
+        private void broadcastToMainActivity(String broadCastMessage, String extraKey, BluetoothDevice device){
+            Intent messageToMainActivity = new Intent(broadCastMessage);
+            messageToMainActivity.putExtra(extraKey,device);
+            sendBroadcast(messageToMainActivity);
+        }
+
+        //Method to send broadcasts only in form of messages.
+        private void broadcastToMainActivity(String broadCastMessage){
+            Intent messageToMainActivity = new Intent(broadCastMessage);
+            sendBroadcast(messageToMainActivity);
+        }
     }
 }

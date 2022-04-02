@@ -2,6 +2,7 @@ package com.example.virustrackerapp;
 
 
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanFilter;
@@ -22,6 +23,7 @@ public class BluetoothScanner {
     private ArrayList<ScanFilter> filters;
     private ScanFilter scanFilter;
     private ScanSettings scanSettings;
+    private ArrayList<String> alreadyDiscoveredMacAddresses;
 
     public BluetoothScanner(MainActivity mainActivity, String filterStringUUID) {
         this.mainActivity = mainActivity;
@@ -43,6 +45,7 @@ public class BluetoothScanner {
 
         //Initiating default bluetooth le scanner.
         bleScanner = BluetoothAdapter.getDefaultAdapter().getBluetoothLeScanner();
+        alreadyDiscoveredMacAddresses = new ArrayList<String>();
     }
 
     private ScanCallback scanCallback = new ScanCallback() {
@@ -57,7 +60,28 @@ public class BluetoothScanner {
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
             super.onScanResult(callbackType, result);
-            mainActivity.addDevice(result.getDevice());
+            /*
+             The array list containing the mac addresses of discovered devices
+             during a bluetooth scan session will be used when specific broadcasts
+             are sent from the async background task of CloseContactInsert found
+             inside the CloseContactActivity class. Such broadcasts will identify
+             other remote users to which the current user has:
+             a) Already connected before.
+             a) Has connected successfully at the present time.
+
+             The BroadcastReceiver in the MainActivity will make
+             use of the intent filter in order to find such broadcasts and remove them
+             from the UI and list of discovered devices during the specific bluetooth instance.
+             When the scanning process is stopped the list of mac addresses in reset meaning that
+             these user will be shown again in the UI, but in case the user will attempt
+             close contact establishment with them again same procedure will follow.
+             */
+            BluetoothDevice device = result.getDevice();
+            String address = device.getAddress();
+            if(!alreadyDiscoveredMacAddresses.contains(address)){
+                alreadyDiscoveredMacAddresses.add(address);
+                mainActivity.addDevice(device);
+            }
         }
 
         @Override
@@ -76,6 +100,7 @@ public class BluetoothScanner {
     }
 
     public void stopScanner(){
+        alreadyDiscoveredMacAddresses.clear();
         bleScanner.stopScan(scanCallback);
     }
 
