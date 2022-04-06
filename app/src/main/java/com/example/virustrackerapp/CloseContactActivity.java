@@ -121,9 +121,7 @@ public class CloseContactActivity extends AppCompatActivity {
         closeContactActivityTv.setText("Please wait app is trying to note down remote user id.");
 
 
-        submitBtnCloseContact.setOnClickListener(v -> {
-            new CloseContactInsert().execute();
-        });
+        submitBtnCloseContact.setOnClickListener(v -> new CloseContactInsert().execute());
 
         //Disconnecting from the remote device once the user presses cancel.
         cancelBtnCloseContact.setOnClickListener(v -> {
@@ -286,15 +284,6 @@ public class CloseContactActivity extends AppCompatActivity {
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
             progressDialog.dismiss();
-            /*
-            Handler timeoutHandler = new Handler();
-            timeoutHandler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    broadcastToMainActivity(CLOSE_CONTACT_SERVER_CONNECTION_ERROR);
-                }
-            },5000);
-             */
             //Finish activity after progress dialog is dismissed in order to prevent leaks.
             finish();
         }

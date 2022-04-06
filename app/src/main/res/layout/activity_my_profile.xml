@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:backgroundTintMode="add"
+    tools:context=".MyProfileActivity">
+
+  <TextView
+      android:id="@+id/personalProfileTv"
+      android:layout_width="381dp"
+      android:layout_height="58dp"
+      android:layout_marginStart="9dp"
+      android:layout_marginEnd="8dp"
+      android:background="@drawable/round_corner_shape"
+      android:backgroundTint="#03A9F4"
+      android:text="Personal Profile"
+      android:textAlignment="center"
+      android:textSize="25sp"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintTop_toTopOf="parent" />
+
+  <TextView
+      android:id="@+id/closeContactTv"
+      android:layout_width="265dp"
+      android:layout_height="159dp"
+      android:layout_marginStart="40dp"
+      android:layout_marginTop="240dp"
+      android:layout_marginEnd="40dp"
+      android:background="@drawable/round_corner_shape"
+      android:backgroundTint="#A9A9A9"
+      android:lineSpacingMultiplier="1.2"
+      android:text="Profile Attributes"
+      android:textAlignment="center"
+      android:textSize="20sp"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintHorizontal_bias="0.533"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintTop_toTopOf="parent" />
+
+  <LinearLayout
+      android:layout_width="192dp"
+      android:layout_height="103dp"
+      android:layout_marginStart="36dp"
+      android:layout_marginEnd="37dp"
+      android:layout_marginBottom="22dp"
+      android:backgroundTint="#E5E4E2"
+      android:orientation="vertical"
+      android:background="@drawable/round_corner_shape"
+      app:layout_constraintBottom_toBottomOf="@+id/closeContactTv"
+      app:layout_constraintEnd_toEndOf="@+id/closeContactTv"
+      app:layout_constraintStart_toStartOf="@+id/closeContactTv">
+
+    <TextView
+        android:id="@+id/vaccineTv"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_marginLeft="6sp"
+        android:layout_marginTop="6sp"
+        android:background="#E5E4E2"
+        android:text="Fully Vaccinated:"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/infectionTv"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_marginLeft="6sp"
+        android:layout_marginTop="6sp"
+        android:background="#E5E4E2"
+        android:text="Infected:"
+        android:textSize="16sp" />
+  </LinearLayout>
+
+  <LinearLayout
+      android:layout_width="127dp"
+      android:layout_height="193dp"
+      android:layout_marginStart="117dp"
+      android:layout_marginTop="25dp"
+      android:layout_marginEnd="116dp"
+      android:orientation="vertical"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintTop_toBottomOf="@+id/closeContactTv">
+
+    <Button
+        android:id="@+id/searchBtn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="SEARCH CONTACTS"
+        android:textColor="@color/black" />
+
+    <Button
+        android:id="@+id/button9"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10sp"
+        android:text="Update Profile"
+        android:backgroundTint="@android:color/holo_orange_light"
+        android:textColor="@color/black" />
+
+    <Button
+        android:id="@+id/updateBtn"
+        android:layout_width="match_parent"
+        android:layout_height="58dp"
+        android:layout_marginTop="10sp"
+        android:backgroundTint="@android:color/holo_red_dark"
+        android:text="DELETE PROFILE"
+        android:textColor="@color/black" />
+  </LinearLayout>
+
+  <TextView
+      android:id="@+id/statusTv"
+      android:layout_width="302dp"
+      android:layout_height="130dp"
+      android:layout_marginStart="29dp"
+      android:layout_marginEnd="29dp"
+      android:layout_marginBottom="23dp"
+      android:text="In order to find out if you have been in contact with an infected person please press on the search contacts Button."
+      android:textSize="18sp"
+      app:layout_constraintBottom_toTopOf="@+id/closeContactTv"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintStart_toStartOf="parent" />
+
+  <Button
+      android:id="@+id/backBtn"
+      android:layout_width="73dp"
+      android:layout_height="41dp"
+      android:layout_marginStart="16dp"
+      android:layout_marginTop="10dp"
+      android:backgroundTint="@color/black"
+      android:text="BACK"
+      android:textSize="12sp"
+      app:layout_constraintStart_toStartOf="@+id/personalProfileTv"
+      app:layout_constraintTop_toTopOf="@+id/personalProfileTv" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

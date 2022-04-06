@@ -6,9 +6,10 @@
         <entry key="../../../../layout/custom_preview.xml" value="0.13541666666666666" />
         <entry key="app/src/main/res/drawable/round_corner.xml" value="0.13645833333333332" />
         <entry key="app/src/main/res/drawable/shape.xml" value="0.22760416666666666" />
-        <entry key="app/src/main/res/layout/activity_close_contact.xml" value="0.1" />
-        <entry key="app/src/main/res/layout/activity_main.xml" value="0.1" />
+        <entry key="app/src/main/res/layout/activity_close_contact.xml" value="0.10251705527529212" />
+        <entry key="app/src/main/res/layout/activity_main.xml" value="0.22" />
         <entry key="app/src/main/res/layout/activity_main2.xml" value="0.1" />
+        <entry key="app/src/main/res/layout/activity_my_profile.xml" value="0.25" />
         <entry key="app/src/main/res/layout/close_contact_dialog.xml" value="0.18" />
         <entry key="app/src/main/res/layout/close_contact_popup.xml" value="0.25749812818395706" />
         <entry key="app/src/main/res/layout/empty_list_view.xml" value="0.2302323007476088" />

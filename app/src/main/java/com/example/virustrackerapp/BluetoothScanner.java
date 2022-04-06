@@ -27,7 +27,7 @@ public class BluetoothScanner {
 
     public BluetoothScanner(MainActivity mainActivity, String filterStringUUID) {
         this.mainActivity = mainActivity;
-        rssiValue = -90;
+        rssiValue = -55;
         filterUUID = new ParcelUuid(UUID.fromString(filterStringUUID));
         filters = new ArrayList<ScanFilter>();
         //Filtering results by service UUID.

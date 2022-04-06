@@ -135,7 +135,7 @@ public class MainActivity extends AppCompatActivity  {
 
         setContentView(R.layout.activity_main);
         scanBtn = (Button) findViewById(R.id.scanBtn);
-        Button updateBtn = (Button) findViewById(R.id.updateBtn);
+        Button profileBtn = (Button) findViewById(R.id.profileBtn);
         deviceListView = (ListView) findViewById(R.id.deviceList);
         header = (TextView) findViewById(R.id.nearByBanner);
         appNotActiveTv = (TextView) findViewById(R.id.appNotActive);
@@ -152,7 +152,11 @@ public class MainActivity extends AppCompatActivity  {
         //Setting listener for event to occur when a specific list item is clicked.
         deviceListView.setOnItemClickListener((parent, view, position, id) -> launchCloseContactActivity(devicesFound.get(position)));
 
-        updateBtn.setOnClickListener(v -> createUpdateDialog());
+        //profileBtn.setOnClickListener(v -> createUpdateDialog());
+        profileBtn.setOnClickListener(v->{
+            Intent i = new Intent(getApplicationContext(),MyProfileActivity.class);
+            startActivity(i);
+        });
 
         scanBtn.setOnClickListener(v -> {
             deviceListView.setEmptyView(noUsersTv);
