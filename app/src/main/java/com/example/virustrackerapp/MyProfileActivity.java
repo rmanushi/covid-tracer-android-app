@@ -1,5 +1,6 @@
 package com.example.virustrackerapp;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.ProgressDialog;
@@ -7,7 +8,9 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
+import android.widget.RadioButton;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -24,7 +27,6 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
 public class MyProfileActivity extends AppCompatActivity {
-    private Button deleteBtn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,9 +37,70 @@ public class MyProfileActivity extends AppCompatActivity {
         backBtn.setOnClickListener(v->finish());
 
         Button updateBtn = (Button) findViewById(R.id.updateBtn);
-        Button searchBtn = (Button) findViewById(R.id.searchBtn);
+        updateBtn.setOnClickListener(v->createUpdateDialog());
 
+        Button searchBtn = (Button) findViewById(R.id.searchBtn);
         searchBtn.setOnClickListener(v-> new InfectionSearch().execute());
+
+        Button deleteBtn = (Button) findViewById(R.id.deleteBtn);
+
+    }
+
+    //Method that creates the update dialog view.
+    private void createUpdateDialog(){
+        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
+        final View updatePopUpView = getLayoutInflater().inflate(R.layout.update_activity_popup,null);
+
+        //Setting up submit and cancel buttons to their components in the update layout.
+        Button updatePopUpSubmitBtn = (Button) updatePopUpView.findViewById(R.id.submitRegistrationBtn);
+        Button updatePopUpCancelBtn = (Button) updatePopUpView.findViewById(R.id.cancelRegistrationBtn);
+
+        //Setting up radio buttons to their components in the update layout.
+        RadioButton trueUpdateInfectionBtn = (RadioButton) updatePopUpView.findViewById(R.id.infectionTrueBtnReg);
+        RadioButton falseUpdateInfectionBtn = (RadioButton) updatePopUpView.findViewById(R.id.infectionFalseBtnReg);
+        RadioButton trueUpdateVaccineBtn = (RadioButton) updatePopUpView.findViewById(R.id.trueVaccineBtnReg);
+        RadioButton falseUpdateVaccineBtn = (RadioButton) updatePopUpView.findViewById(R.id.falseRegistrationVaccineBtn);
+
+        //Setting up update dialog view with new assigned components in the main activity.
+        dialogBuilder.setView(updatePopUpView);
+        AlertDialog updateDialog = dialogBuilder.create();
+        updateDialog.show();
+
+        //Action to take place when new data is added and the submit button is pressed.
+        updatePopUpSubmitBtn.setOnClickListener(v -> {
+            //The rest is to be defined with the backend to actually update the specific user profile.
+
+            //Checking that user input is valid while selecting new values to update their profile.
+            if(!trueUpdateVaccineBtn.isChecked() && !falseUpdateVaccineBtn.isChecked()){
+                UtilityClass.toast(this,"Error: Please select a new value for vaccination in order to submit!");
+            }else if(!trueUpdateInfectionBtn.isChecked() && !falseUpdateInfectionBtn.isChecked()){
+                UtilityClass.toast(this,"Error: Please select a  new value for infection in order to submit!");
+            }
+        });
+
+        //Action to be performed when cancel button in the pop up is pressed.
+        updatePopUpCancelBtn.setOnClickListener(v -> updateDialog.dismiss());
+
+        ////////////////////Radio button changes when they are pressed////////////////////
+        trueUpdateVaccineBtn.setOnClickListener(v -> {
+            trueUpdateVaccineBtn.setChecked(true);
+            falseUpdateVaccineBtn.setChecked(false);
+        });
+
+        falseUpdateVaccineBtn.setOnClickListener(v -> {
+            falseUpdateVaccineBtn.setChecked(true);
+            trueUpdateVaccineBtn.setChecked(false);
+        });
+
+        trueUpdateInfectionBtn.setOnClickListener(v -> {
+            trueUpdateInfectionBtn.setChecked(true);
+            falseUpdateInfectionBtn.setChecked(false);
+        });
+        falseUpdateInfectionBtn.setOnClickListener(v -> {
+            falseUpdateInfectionBtn.setChecked(true);
+            trueUpdateInfectionBtn.setChecked(false);
+        });
+        ///////////////////////End of radio button view changes//////////////////////
     }
 
     private class InfectionSearch extends AsyncTask<String, String, String>{
