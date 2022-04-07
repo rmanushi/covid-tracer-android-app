@@ -19,7 +19,6 @@ import android.os.Handler;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ListView;
-import android.widget.RadioButton;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -66,10 +65,8 @@ public class MainActivity extends AppCompatActivity  {
     private SharedPreferences sharedPreferences;
 
 
-    //Components that are going to be shown in the update pop up.
+    //Build used in the registration screen message for first time users.
     private AlertDialog.Builder dialogBuilder;
-    private AlertDialog updateDialog;
-    private RadioButton trueUpdateInfectionBtn, falseUpdateInfectionBtn, trueUpdateVaccineBtn, falseUpdateVaccineBtn;
 
     //Receiver used to detect the broadcast sent by the CloseContact activity in case the connection attempt to the selected device fails
     private final BroadcastReceiver receiver = new BroadcastReceiver() {
@@ -308,8 +305,6 @@ public class MainActivity extends AppCompatActivity  {
         protected void onPreExecute() {
             //Showing progress dialog to the user to inform of the running task during registration.
             super.onPreExecute();
-            //ProgressDialog progressDialog = new ProgressDialog(MainActivity.this);
-            //progressDialog = new ProgressDialog(MainActivity.this);
             progressDialog.setTitle("User Registration");
             progressDialog.setMessage("Registering user Please Wait..");
             progressDialog.setCancelable(false);
@@ -396,13 +391,12 @@ public class MainActivity extends AppCompatActivity  {
                         //Error message to be shown in the UI thread.
                         thread = new Thread() {
                             public void run() {
-                                runOnUiThread(() -> UtilityClass.toast(getApplicationContext(), "Unable to register user."));
+                                runOnUiThread(() -> UtilityClass.toast(getApplicationContext(), "Unable to register user, Internal server error."));
                             }
                         };
                     }
                     thread.start();
                     //Disconnecting once the message is received.
-                    con.disconnect();
                 }else{
                     //Error message to be shown in the UI thread.
                     Thread thread = new Thread(){
@@ -411,8 +405,8 @@ public class MainActivity extends AppCompatActivity  {
                         }
                     };
                     thread.start();
-                    con.disconnect();
                 }
+                con.disconnect();
             } catch (IOException | JSONException e) {
                 e.printStackTrace();
             }

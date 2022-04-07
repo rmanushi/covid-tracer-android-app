@@ -38,7 +38,6 @@ public class CloseContactActivity extends AppCompatActivity {
     private BluetoothDevice device;
     private String data;
     private Button submitBtnCloseContact;
-    private Button cancelBtnCloseContact;
     private TextView closeContactActivityTv;
     private Handler connectionHandler = new Handler();
     public static final String CONNECTION_TO_DEVICE_FAILED = "com.example.virustrackerapp.CONNECTION_TO_DEVICE_FAILED";
@@ -59,7 +58,6 @@ public class CloseContactActivity extends AppCompatActivity {
             finish();
         }
     };
-    private final int TIMEOUT_LIMIT = 5000;
 
 
     //Receiver waiting for broadcasts send by the service.
@@ -94,6 +92,7 @@ public class CloseContactActivity extends AppCompatActivity {
                     finish();
                 }
                 //Checking for timeout while attempting connection to the other user.
+                int TIMEOUT_LIMIT = 5000;
                 connectionHandler.postDelayed(connectionTimeoutOperation, TIMEOUT_LIMIT);
                 bluetoothService.connect(device);
             }
@@ -114,7 +113,7 @@ public class CloseContactActivity extends AppCompatActivity {
         device = intent.getExtras().getParcelable("Device");
 
         submitBtnCloseContact = (Button) findViewById(R.id.submitCloseContactBtn);
-        cancelBtnCloseContact = (Button) findViewById(R.id.cancelCloseContactBtn);
+        Button cancelBtnCloseContact = (Button) findViewById(R.id.cancelCloseContactBtn);
         closeContactActivityTv = (TextView) findViewById(R.id.closeContactTv);
 
         submitBtnCloseContact.setEnabled(false);
