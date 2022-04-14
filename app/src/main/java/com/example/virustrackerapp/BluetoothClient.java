@@ -18,7 +18,7 @@ import androidx.annotation.Nullable;
 import java.util.UUID;
 
 
-public class BluetoothService extends Service  {
+public class BluetoothClient extends Service  {
 
     private BluetoothGatt bluetoothGatt;
     private final UUID serviceUUID = UUID.fromString("BB1A3410-B7CA-412C-8A13-AE9D912981AD");
@@ -33,8 +33,8 @@ public class BluetoothService extends Service  {
     public final static String CHARACTERISTIC_DATA = "com.example.virustrackerapp.CHARACTERISTIC_DATA";
 
     class LocalBinder extends Binder {
-        public BluetoothService getService(){
-            return BluetoothService.this;
+        public BluetoothClient getService(){
+            return BluetoothClient.this;
         }
     }
 

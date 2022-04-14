@@ -41,7 +41,7 @@
         </activity>
 
         <service
-            android:name=".BluetoothService"
+            android:name=".BluetoothClient"
             android:enabled="true" >
         </service>
     </application>

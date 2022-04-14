@@ -34,7 +34,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
 public class CloseContactActivity extends AppCompatActivity {
-    private BluetoothService bluetoothService;
+    private BluetoothClient bluetoothClient;
     private BluetoothDevice device;
     private String data;
     private Button submitBtnCloseContact;
@@ -65,16 +65,16 @@ public class CloseContactActivity extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
-            if (BluetoothService.ACTION_CONNECTED.equals(action)) {
+            if (BluetoothClient.ACTION_CONNECTED.equals(action)) {
                 UtilityClass.toast(getApplicationContext(),"Connected to remote user.");
                 //In case the connection is achieved the handler timeout operation is discarded.
                 connectionHandler.removeCallbacks(connectionTimeoutOperation);
-            } else if (BluetoothService.ACTION_DISCONNECTED.equals(action)) {
+            } else if (BluetoothClient.ACTION_DISCONNECTED.equals(action)) {
                 UtilityClass.toast(getApplicationContext(),"Disconnected from remote user.");
-            }else if(BluetoothService.ACTION_REQUIRED_CHARACTERISTIC_FOUND.equals(action)){
-                bluetoothService.readCharacteristic(bluetoothService.getAppCharacteristic());
-            }else if(BluetoothService.ACTION_CHARACTERISTIC_DATA_READ.equals(action)){
-                data = intent.getStringExtra(BluetoothService.CHARACTERISTIC_DATA);
+            }else if(BluetoothClient.ACTION_REQUIRED_CHARACTERISTIC_FOUND.equals(action)){
+                bluetoothClient.readCharacteristic(bluetoothClient.getAppCharacteristic());
+            }else if(BluetoothClient.ACTION_CHARACTERISTIC_DATA_READ.equals(action)){
+                data = intent.getStringExtra(BluetoothClient.CHARACTERISTIC_DATA);
                 closeContactActivityTv.setText("Are you sure you want to establish close contact with:" + device.getAddress() + " ?");
                 submitBtnCloseContact.setEnabled(true);
             }
@@ -85,21 +85,21 @@ public class CloseContactActivity extends AppCompatActivity {
     private final ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            bluetoothService = ((BluetoothService.LocalBinder) service).getService();
-            if(bluetoothService != null){
-                if(!bluetoothService.initialize()){
+            bluetoothClient = ((BluetoothClient.LocalBinder) service).getService();
+            if(bluetoothClient != null){
+                if(!bluetoothClient.initialize()){
                     UtilityClass.toast(getApplicationContext(),"Unable to initialize bluetooth.");
                     finish();
                 }
                 //Checking for timeout while attempting connection to the other user.
                 int TIMEOUT_LIMIT = 5000;
                 connectionHandler.postDelayed(connectionTimeoutOperation, TIMEOUT_LIMIT);
-                bluetoothService.connect(device);
+                bluetoothClient.connect(device);
             }
         }
         @Override
         public void onServiceDisconnected(ComponentName name) {
-            bluetoothService = null;
+            bluetoothClient = null;
         }
     };
 
@@ -124,11 +124,11 @@ public class CloseContactActivity extends AppCompatActivity {
 
         //Disconnecting from the remote device once the user presses cancel.
         cancelBtnCloseContact.setOnClickListener(v -> {
-            bluetoothService.disconnect();
+            bluetoothClient.disconnect();
             finish();
         });
 
-        Intent gattServiceIntent = new Intent(this, BluetoothService.class);
+        Intent gattServiceIntent = new Intent(this, BluetoothClient.class);
         bindService(gattServiceIntent, serviceConnection, BIND_AUTO_CREATE);
         registerReceiver(bluetoothServiceBroadcastReceiver, intentFilter());
     }
@@ -139,16 +139,16 @@ public class CloseContactActivity extends AppCompatActivity {
         super.onDestroy();
         unbindService(serviceConnection);
         unregisterReceiver(bluetoothServiceBroadcastReceiver);
-        bluetoothService = null;
+        bluetoothClient = null;
     }
 
     //Filter set up to differentiate between the broadcasts sent by the service.
     private IntentFilter intentFilter() {
         final IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(BluetoothService.ACTION_CONNECTED);
-        intentFilter.addAction(BluetoothService.ACTION_DISCONNECTED);
-        intentFilter.addAction(BluetoothService.ACTION_REQUIRED_CHARACTERISTIC_FOUND);
-        intentFilter.addAction(BluetoothService.ACTION_CHARACTERISTIC_DATA_READ);
+        intentFilter.addAction(BluetoothClient.ACTION_CONNECTED);
+        intentFilter.addAction(BluetoothClient.ACTION_DISCONNECTED);
+        intentFilter.addAction(BluetoothClient.ACTION_REQUIRED_CHARACTERISTIC_FOUND);
+        intentFilter.addAction(BluetoothClient.ACTION_CHARACTERISTIC_DATA_READ);
         return intentFilter;
     }
 

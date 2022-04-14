@@ -9,6 +9,8 @@ import android.widget.Toast;
 import java.nio.ByteBuffer;
 import java.util.UUID;
 
+import javax.crypto.Cipher;
+
 //Class to help with simple helper services.
 
 public class UtilityClass {
@@ -52,5 +54,4 @@ public class UtilityClass {
         Long low = byteBuffer.getLong();
         return new UUID(high, low);
     }
-
 }
