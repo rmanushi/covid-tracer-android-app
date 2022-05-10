@@ -76,11 +76,14 @@ public class BluetoothScanner {
              these user will be shown again in the UI, but in case the user will attempt
              close contact establishment with them again same procedure will follow.
              */
-            BluetoothDevice device = result.getDevice();
-            String address = device.getAddress();
-            if(!alreadyDiscoveredMacAddresses.contains(address)){
-                alreadyDiscoveredMacAddresses.add(address);
-                mainActivity.addDevice(device);
+
+            if(rssiValue <= result.getRssi()){
+                BluetoothDevice device = result.getDevice();
+                String address = device.getAddress();
+                if(!alreadyDiscoveredMacAddresses.contains(address)){
+                    alreadyDiscoveredMacAddresses.add(address);
+                    mainActivity.addDevice(device);
+                }
             }
         }
 

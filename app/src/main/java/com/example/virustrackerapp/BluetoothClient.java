@@ -72,7 +72,7 @@ public class BluetoothClient extends Service  {
         return super.onUnbind(intent);
     }
 
-    public boolean initialize() {
+    public boolean initialise() {
         if (!UtilityClass.checkBluetoothStatus()) {
             Log.i(TAG, "Unable to obtain a BluetoothAdapter.");
             return false;

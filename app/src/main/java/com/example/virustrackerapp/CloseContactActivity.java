@@ -87,7 +87,7 @@ public class CloseContactActivity extends AppCompatActivity {
         public void onServiceConnected(ComponentName name, IBinder service) {
             bluetoothClient = ((BluetoothClient.LocalBinder) service).getService();
             if(bluetoothClient != null){
-                if(!bluetoothClient.initialize()){
+                if(!bluetoothClient.initialise()){
                     UtilityClass.toast(getApplicationContext(),"Unable to initialize bluetooth.");
                     finish();
                 }
